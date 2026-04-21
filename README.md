@@ -14,7 +14,7 @@ Made With ❤️ by **codeX** Studio
 # codeX Studio Official Site
 Made With ❤️ by **codeX** Studio
 
-> **Official Site:** [https://codexstudio.pages.dev/](https://codexstudio.pages.dev/)
+> **Official Site:** [https://codex-studio-hq.netlify.app/](https://codex-studio-hq.netlify.app/)
 
 ---
 
