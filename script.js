@@ -1,5 +1,98 @@
 const socket = io();
 
+/* ═══════════════════════════════════════════════════
+   ÇEVİRİ SİSTEMİ
+   ═══════════════════════════════════════════════════ */
+const translations = {
+  en: {
+    createRoom: '✦ Create Room',
+    joinRoom: 'Join',
+    or: 'or',
+    hint: 'Space or tap to flap',
+    roomCodeLabel: 'ROOM CODE',
+    waiting: 'Waiting for opponent…',
+    start: '▶ START',
+    you: 'YOU',
+    opponent: 'OPPONENT',
+    victory: 'VICTORY!',
+    defeat: 'DEFEATED',
+    draw: 'DRAW',
+    restart: 'Play Again',
+    menu: 'Main Menu',
+    pipes: 'Pipes',
+    flaps: 'Flaps',
+    time: 'Time',
+    aboutTitle: 'ABOUT',
+    aboutDesc: 'Two players, same pipes, same time! Pass pipes, score more than your opponent.',
+    loading: '-- ms',
+    restartWait: 'Waiting for opponent…',
+    enterCode: 'ENTER CODE',
+    joined: '✅ Connected! Host will start…',
+    opponentReady: '🎮 Opponent ready!',
+    opponentReadyRestart: 'Opponent ready, are you?'
+  },
+  tr: {
+    createRoom: '✦ Oda Oluştur',
+    joinRoom: 'Katıl',
+    or: 'veya',
+    hint: 'Boşluk tuşu veya ekrana dokun',
+    roomCodeLabel: 'ODA KODU',
+    waiting: 'Rakip bekleniyor…',
+    start: '▶ BAŞLAT',
+    you: 'SEN',
+    opponent: 'RAKİP',
+    victory: 'ZAFER!',
+    defeat: 'YENİLDİN',
+    draw: 'BERABERE',
+    restart: 'Tekrar Oyna',
+    menu: 'Ana Menü',
+    pipes: 'Boru',
+    flaps: 'Zıplama',
+    time: 'Süre',
+    aboutTitle: 'HAKKINDA',
+    aboutDesc: 'İki oyuncu, aynı borular, aynı anda mücadele! Boruları geç, rakibinden daha çok skor yap.',
+    loading: '-- ms',
+    restartWait: 'Rakip bekleniyor…',
+    enterCode: 'KOD GİR',
+    joined: '✅ Bağlandı! Host başlatacak…',
+    opponentReady: '🎮 Rakip hazır!',
+    opponentReadyRestart: 'Rakip hazır, sen de hazır mısın?'
+  },
+  de: {
+    createRoom: '✦ Raum erstellen',
+    joinRoom: 'Beitreten',
+    or: 'oder',
+    hint: 'Leertaste oder tippen',
+    roomCodeLabel: 'RAUMCODE',
+    waiting: 'Warte auf Gegner…',
+    start: '▶ START',
+    you: 'DU',
+    opponent: 'GEGNER',
+    victory: 'SIEG!',
+    defeat: 'NIEDERLAGE',
+    draw: 'UNENTSCHIEDEN',
+    restart: 'Erneut spielen',
+    menu: 'Hauptmenü',
+    pipes: 'Röhren',
+    flaps: 'Flügelschläge',
+    time: 'Zeit',
+    aboutTitle: 'ÜBER',
+    aboutDesc: 'Zwei Spieler, gleiche Röhren, gleiche Zeit! Passiere Röhren, erziele mehr Punkte als dein Gegner.',
+    loading: '-- ms',
+    restartWait: 'Warte auf Gegner…',
+    enterCode: 'CODE EINGEBEN',
+    joined: '✅ Verbunden! Host startet…',
+    opponentReady: '🎮 Gegner bereit!',
+    opponentReadyRestart: 'Gegner bereit, bist du bereit?'
+  }
+};
+
+let currentLang = localStorage.getItem('lang') || 'en';
+
+function t(key) {
+  return translations[currentLang]?.[key] || translations.en[key] || key;
+}
+
 /* ── DOM ─────────────────────────────────────────── */
 const menu           = document.getElementById('menu');
 const waiting        = document.getElementById('waiting');
@@ -63,8 +156,10 @@ let flashColor = '#ffffff';
 let dying      = false;
 let dyingTimer = 0;
 
+
 /* ── Parallax Yıldızlar ──────────────────────────── */
 let stars = [];
+
 
 function initStars() {
     stars = [];
@@ -553,7 +648,7 @@ function showStats(endData) {
 socket.on('roomCreated', d => {
     roomCode = d.roomCode; isHost = true;
     roomCodeDisp.textContent = roomCode;
-    statusText.textContent   = 'Rakip bekleniyor…';
+    statusText.textContent   = t('waiting');
     startBtn.classList.add('hidden');
     showOnly('waiting');
 });
@@ -561,13 +656,13 @@ socket.on('roomCreated', d => {
 socket.on('roomJoined', d => {
     roomCode = d.roomCode; pipeSet = d.pipeSet;
     roomCodeDisp.textContent = roomCode;
-    statusText.textContent   = '✅ Bağlandı! Host başlatacak…';
+    statusText.textContent   = t('joined');
     startBtn.classList.add('hidden');
     showOnly('waiting');
 });
 
 socket.on('opponentJoined', () => {
-    statusText.textContent = '🎮 Rakip hazır!';
+    statusText.textContent = t('opponentReady');
     startBtn.classList.remove('hidden');
 });
 
@@ -647,21 +742,21 @@ socket.on('gameEnded', d => {
 
     if (d.winner === socket.id) {
         resultIcon.textContent = '🏆';
-        resultText.textContent = 'ZAFER!';
+        resultText.textContent = t('victory');
         resultText.style.color = '#ff4444';
     } else if (d.winner === 'draw') {
         resultIcon.textContent = '🤝';
-        resultText.textContent = 'BERABERE';
+        resultText.textContent = t('draw');
         resultText.style.color = '#ff8844';
     } else {
         resultIcon.textContent = '💀';
-        resultText.textContent = 'YENİLDİN';
+        resultText.textContent = t('defeat');
         resultText.style.color = '#882222';
     }
 });
 
 socket.on('opponentReadyForRestart', () => {
-    statusText.textContent = 'Rakip hazır, sen de hazır mısın?';
+    statusText.textContent = t('opponentReadyRestart');
 });
 
 socket.on('menuRedirect', () => {
@@ -684,7 +779,7 @@ startBtn.onclick = () => { if (roomCode) socket.emit('startGame', roomCode); };
 document.getElementById('restartBtn').onclick = () => {
     if (!roomCode) return;
     socket.emit('readyToRestart', roomCode);
-    resultText.textContent = 'Rakip bekleniyor…';
+    resultText.textContent = t('restartWait');
     resultText.style.color = '#ff8844';
     resultIcon.textContent = '⏳';
 };
@@ -749,3 +844,118 @@ document.addEventListener('click', () => { if (gameRunning) flap(); });
 document.addEventListener('touchstart', e => {
     if (gameRunning) { e.preventDefault(); flap(); }
 }, { passive: false });
+
+/* ══ DİL DEĞİŞTİRME ═════════════════════════════════ */
+const langBtn = document.getElementById('langBtn');
+const langMenu = document.getElementById('langMenu');
+const langOptions = document.querySelectorAll('.lang-option');
+
+// Menüyü aç/kapat
+langBtn.onclick = () => {
+    langMenu.classList.toggle('hidden');
+};
+
+// Menü dışına tıklanınca kapat
+document.addEventListener('click', (e) => {
+    if (!langBtn.contains(e.target) && !langMenu.contains(e.target)) {
+        langMenu.classList.add('hidden');
+    }
+});
+
+// Dil seçimi
+langOptions.forEach(opt => {
+    opt.onclick = () => {
+        const newLang = opt.dataset.lang;
+        if (newLang === currentLang) {
+            langMenu.classList.add('hidden');
+            return;
+        }
+        
+        currentLang = newLang;
+        localStorage.setItem('lang', currentLang);
+        
+        // Menüdeki seçiliyi güncelle
+        langOptions.forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        
+        // Tüm UI'ı güncelle
+        updateUILanguage();
+        
+        langMenu.classList.add('hidden');
+    };
+});
+
+// Sayfa yüklendiğinde dil menüsünde doğru seçiliyi işaretle
+(function initLangSelection() {
+    const selected = document.querySelector(`.lang-option[data-lang="${currentLang}"]`);
+    if (selected) {
+        langOptions.forEach(o => o.classList.remove('selected'));
+        selected.classList.add('selected');
+    }
+})();
+
+// Tüm metinleri güncelleyen fonksiyon
+function updateUILanguage() {
+    // Placeholder
+    function updatePlaceholder() {
+        const joinInput = document.getElementById('joinInput');
+        if (joinInput) joinInput.placeholder = t('enterCode');
+    }
+    updatePlaceholder();
+
+    // Status text (mevcut duruma göre en iyi tahmin)
+    const st = statusText.textContent;
+    if (st.includes('Rakip bekleniyor') || st.includes('Waiting') || st.includes('Warte')) statusText.textContent = t('waiting');
+    else if (st.includes('Bağlandı') || st.includes('Connected') || st.includes('Verbunden')) statusText.textContent = t('joined');
+    else if (st.includes('Rakip hazır') || st.includes('Opponent ready') || st.includes('Gegner bereit')) statusText.textContent = t('opponentReady');
+    else if (st.includes('Rakip hazır, sen') || st.includes('Opponent ready, are') || st.includes('Gegner bereit, bist')) statusText.textContent = t('opponentReadyRestart');
+
+    // Ana menü
+    document.getElementById('createBtn').innerHTML = t('createRoom');
+    document.getElementById('joinBtn').textContent = t('joinRoom');
+    document.querySelector('.divider span').textContent = t('or');
+    document.querySelector('.hint').textContent = t('hint');
+    
+    // Bekleme odası
+    document.querySelector('.label').textContent = t('roomCodeLabel');
+    document.getElementById('startBtn').innerHTML = t('start');
+    
+    // Oyun HUD
+    document.querySelector('.hud-box.you .hud-label').textContent = t('you');
+    document.querySelector('.hud-box.opp .hud-label').textContent = t('opponent');
+    
+    // Oyun sonu butonları
+    document.getElementById('restartBtn').textContent = t('restart');
+    document.getElementById('menuBtn').textContent = t('menu');
+    
+    // İstatistik etiketleri
+    const statBoxes = document.querySelectorAll('.stat-box');
+    if (statBoxes.length >= 3) {
+        statBoxes[0].querySelector('.stat-label').textContent = '🏁 ' + t('pipes');
+        statBoxes[1].querySelector('.stat-label').textContent = '🪶 ' + t('flaps');
+        statBoxes[2].querySelector('.stat-label').textContent = '⏱️ ' + t('time');
+    }
+    
+    // Modal
+    const modalTitle = document.querySelector('.modal-title');
+    if (modalTitle) modalTitle.textContent = t('aboutTitle');
+    const modalDesc = document.querySelector('.modal-desc');
+    if (modalDesc) modalDesc.innerHTML = t('aboutDesc').replace(/\n/g, '<br>');
+    
+    // Oyun sonu mesajları (eğer gösteriliyorsa)
+    const rt = resultText.textContent;
+    if (rt.includes('ZAFER') || rt.includes('VICTORY') || rt.includes('SIEG')) {
+        resultText.textContent = t('victory');
+    } else if (rt.includes('YENİLDİN') || rt.includes('DEFEATED') || rt.includes('NIEDERLAGE')) {
+        resultText.textContent = t('defeat');
+    } else if (rt.includes('BERABERE') || rt.includes('DRAW') || rt.includes('UNENTSCHIEDEN')) {
+        resultText.textContent = t('draw');
+    } else if (rt.includes('Rakip bekleniyor') || rt.includes('Waiting for opponent') || rt.includes('Warte auf Gegner')) {
+        resultText.textContent = t('restartWait');
+    }
+}
+
+// Sayfa yüklendiğinde UI'ı başlangıç diline ayarla
+document.addEventListener('DOMContentLoaded', () => {
+    updateUILanguage();
+});
