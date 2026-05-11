@@ -60,6 +60,41 @@ body {
     100% { bottom:105vh; opacity:0; transform:translateX(20px); }
 }
 
+/* Dil Menüsü */
+#langContainer {
+    position: relative;
+}
+
+.lang-menu {
+    position: absolute;
+    bottom: 60px;
+    right: 0;
+    background: #1a0a0a;
+    border: 1px solid #a00;
+    border-radius: 12px;
+    padding: 8px 0;
+    min-width: 130px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.7);
+    z-index: 300;
+}
+
+.lang-option {
+    padding: 8px 20px;
+    cursor: pointer;
+    color: #ccc;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.lang-option:hover {
+    background: rgba(200,0,0,0.2);
+}
+
+.lang-option.selected {
+    color: #ff4444;
+    font-weight: 900;
+}
+
 /* ── Layout ──────────────────────────────────────── */
 .container {
     position: relative;
