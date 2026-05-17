@@ -1,4 +1,5 @@
-![FlappyDuel](./art/Flappy_Duel.png)
+<img src="art/Flappy_Duel.png" width="400" alt="FlappyDuelLogo">
+
 # Flappy Duel (Beta v1.2)
 Made With ❤️ by **codeX** Studio
 > **Developer:** Wrenchiz  
