@@ -3,7 +3,6 @@
 # Flappy Duel (Beta v1.2)
 Made With ❤️ by **codeX** Studio
 > **Developer:** Wrenchiz  
-> **Discord:** 88wrench_iz  
 > **Version:** Beta v1.2  
 > **Engine:** HTML5 Canvas + Socket.io  
 > **Live Open Beta:** [https://flappy-duel.onrender.com/](https://flappy-duel.onrender.com/)
