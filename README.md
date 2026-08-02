@@ -1,7 +1,7 @@
 <img src="art/Flappy_Duel.png" width="400" alt="FlappyDuelLogo">
 
 # Flappy Duel (Beta v1.2)
-Made With ❤️ by **codeX** Studio
+Made With ❤️ by **Phantomware**
 > **Developer:** Wrenchiz  
 > **Version:** Beta v1.2  
 > **Engine:** HTML5 Canvas + Socket.io  
@@ -11,10 +11,9 @@ Made With ❤️ by **codeX** Studio
 
 ![codeX Logo](./art/favicon2.ico)
 
-# codeX Studio Official Site
-Made With ❤️ by **codeX** Studio
+# Phantomware Official Website
 
-> **Official Site:** [https://codex-studio-hq.netlify.app/](https://codex-studio-hq.netlify.app/)
+> **Official Website:** [https://codex-studio-hq.netlify.app/](https://codex-studio-hq.netlify.app/)
 
 ---
 
@@ -23,4 +22,4 @@ Made With ❤️ by **codeX** Studio
 This project is licensed under the **CC BY-NC-ND 4.0** License. 
 See the [LICENSE](https://github.com/Wrenchiz/Flappy-Duel?tab=License-1-ov-file) file for the full legal text.
 
-© 2026 codeX Studio
+© 2026 Phantomware
