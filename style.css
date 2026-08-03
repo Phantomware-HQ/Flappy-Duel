@@ -698,9 +698,33 @@ canvas {
 }
 
 .modal-company-logo {
-    height: 22px;
+    height: 40px;
     width: auto;
-    filter: brightness(0.75);
+    filter: brightness(0.9);
+    transition: all 0.3s ease;
+    border-radius: 12px;
+}
+
+.modal-company-logo:hover {
+    transform: scale(1.05);
+    filter: brightness(1.3) drop-shadow(0 0 15px rgba(255, 100, 0, 0.7));
+}
+
+/* Logonun container'ı için (eğer link ise) */
+a:has(.modal-company-logo) {
+    display: inline-block;
+    line-height: 0;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+a:has(.modal-company-logo):hover {
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 15px rgba(255, 100, 0, 0.7));
+}
+
+a:has(.modal-company-logo):hover .modal-company-logo {
+    filter: brightness(1.3) drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
 }
 
 /* Durum Çubuğu (Sağ Üst) */
