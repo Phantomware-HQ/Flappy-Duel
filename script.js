@@ -131,12 +131,12 @@ const statMyTime   = document.getElementById('statMyTime');
 const statOppTime  = document.getElementById('statOppTime');
 
 /* ── Fizik ───────────────────────────────────────── */
-const GRAVITY    = 0.055;
-const FLAP_FORCE = -3.4;
+const GRAVITY    = 0.04;
+const FLAP_FORCE = -2.5;  
 const MAX_VEL    = 7;
 const PIPE_W     = 68;
 const PIPE_GAP   = 188;
-const PIPE_SPEED = 2.1;
+const PIPE_SPEED = 1.5; 
 const BIRD_R     = 15;
 
 /* ── Durum ───────────────────────────────────────── */
