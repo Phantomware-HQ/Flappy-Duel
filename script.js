@@ -334,10 +334,8 @@ function spawnParticles(x, y, color, count) {
 function drawParticles() {
     for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.15;
-        p.vx *= 0.97;
+        p.x += p.vx; p.y += p.vy;
+        p.vy += 0.15; p.vx *= 0.97;
         p.alpha -= p.decay;
         if (p.alpha <= 0) { particles.splice(i, 1); continue; }
         ctx.save();
@@ -441,28 +439,15 @@ function drawFlash() {
     if (flashAlpha < 0) flashAlpha = 0;
 }
 
-let frameCount = 0;
-let lastFpsTime = 0;
-
-function mainLoop(timestamp) {
-    if (!gameRunning && !dying) {
-        raf = requestAnimationFrame(mainLoop);
-        return;
-    }
-
-    // FPS SABİTLEME: Sadece ~60 FPS'de bir kare çiz
-    if (timestamp - lastFpsTime < 16) {  // 1000/60 ≈ 16.67ms
-        raf = requestAnimationFrame(mainLoop);
-        return;
-    }
-    lastFpsTime = timestamp;
+/* ══ ANA DÖNGÜ ════════════════════════════════════════ */
+function mainLoop() {
+    if (!gameRunning && !dying) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawBG();
     drawPipes();
 
     if (gameRunning) {
-        // Fizik (eski, delta'sız)
         myBird.vel  = Math.min(myBird.vel  + GRAVITY, MAX_VEL);
         myBird.y   += myBird.vel;
         oppBird.vel = Math.min(oppBird.vel + GRAVITY, MAX_VEL);
@@ -488,8 +473,7 @@ function mainLoop(timestamp) {
                 myBird.x - myBird.r < p.x + PIPE_W) {
                 if (myBird.y - myBird.r < p.top ||
                     myBird.y + myBird.r > p.top + PIPE_GAP) {
-                    killMyBird();
-                    return;
+                    killMyBird(); return;
                 }
             }
             if (p.x + PIPE_W < 0) pipes.splice(i, 1);
@@ -497,14 +481,16 @@ function mainLoop(timestamp) {
 
         if (myBird.y + myBird.r > canvas.height ||
             myBird.y - myBird.r < 0) {
-            killMyBird();
-            return;
+            killMyBird(); return;
         }
     }
 
+    // === ROL BAZLI KUŞ RENKLERİ ===
+    // host (myRole === 'host') → kendi kuşu SİYAH (isOpp = false), rakip KIRMIZI (isOpp = true)
+    // guest (myRole === 'guest') → kendi kuşu KIRMIZI (isOpp = true), rakip SİYAH (isOpp = false)
     const iAmHost = (myRole === 'host');
-    drawBird(myBird,  myAnim,  !iAmHost);
-    drawBird(oppBird, oppAnim, iAmHost);
+    drawBird(myBird,  myAnim,  !iAmHost);  // host ise false (siyah), guest ise true (kırmızı)
+    drawBird(oppBird, oppAnim, iAmHost);   // host ise true (kırmızı), guest ise false (siyah)
 
     drawParticles();
     drawFlash();
