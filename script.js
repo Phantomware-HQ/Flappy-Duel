@@ -1,6 +1,11 @@
 const socket = io();
 
 /* ═══════════════════════════════════════════════════
+   ROL BİLGİSİ
+   ═══════════════════════════════════════════════════ */
+let myRole = null; // 'host' odayı kuran (siyah kuş), 'guest' odaya katılan (kırmızı kuş)
+
+/* ═══════════════════════════════════════════════════
    ÇEVİRİ SİSTEMİ
    ═══════════════════════════════════════════════════ */
 const translations = {
@@ -11,6 +16,7 @@ const translations = {
     hint: 'Space or tap to flap',
     roomCodeLabel: 'ROOM CODE',
     waiting: 'Waiting for opponent…',
+    opponentWantsRestart: 'Opponent wants to play again!',
     start: '▶ START',
     you: 'YOU',
     opponent: 'OPPONENT',
@@ -45,6 +51,7 @@ const translations = {
     defeat: 'YENİLDİN',
     draw: 'BERABERE',
     restart: 'Tekrar Oyna',
+    opponentWantsRestart: 'Rakip seninle tekrar oynamak istiyor!',
     menu: 'Ana Menü',
     pipes: 'Boru',
     flaps: 'Zıplama',
@@ -71,6 +78,7 @@ const translations = {
     victory: 'SIEG!',
     defeat: 'NIEDERLAGE',
     draw: 'UNENTSCHIEDEN',
+    opponentWantsRestart: 'Gegner möchte erneut spielen!',
     restart: 'Erneut spielen',
     menu: 'Hauptmenü',
     pipes: 'Röhren',
@@ -169,7 +177,7 @@ function initStars() {
             x:      Math.random() * 800,
             y:      Math.random() * 440,
             r:      0.6 + Math.random() * 1.2,
-            speed:  0.1 + Math.random() * 0.15,   // katman 1
+            speed:  0.1 + Math.random() * 0.15,
             alpha:  0.2 + Math.random() * 0.4
         });
     }
@@ -178,7 +186,7 @@ function initStars() {
             x:      Math.random() * 800,
             y:      Math.random() * 440,
             r:      1 + Math.random() * 1.5,
-            speed:  0.25 + Math.random() * 0.2,   // katman 2
+            speed:  0.25 + Math.random() * 0.2,
             alpha:  0.3 + Math.random() * 0.5
         });
     }
@@ -187,7 +195,7 @@ function initStars() {
             x:      Math.random() * 800,
             y:      Math.random() * 440,
             r:      1.5 + Math.random() * 2,
-            speed:  0.45 + Math.random() * 0.25,  // katman 3
+            speed:  0.45 + Math.random() * 0.25,
             alpha:  0.5 + Math.random() * 0.5
         });
     }
@@ -213,29 +221,25 @@ function drawStars() {
 }
 
 /* ── Kuş Animasyon State ─────────────────────────── */
-/* Her kuş için kanat açısı ve gövde rotasyonu tutuyoruz */
 function makeBirdAnim() {
     return {
-        wingAngle: 0,        // kanat açılma açısı (0-1)
-        wingDir:   -1,       // kapanıyor mu açılıyor mu
-        rotation:  0         // gövde eğimi (radyan)
+        wingAngle: 0,
+        wingDir:   -1,
+        rotation:  0
     };
 }
 let myAnim, oppAnim;
 
 function updateBirdAnim(anim, vel) {
-    /* Gövde rotasyonu: hıza göre eğilir */
     const targetRot = Math.max(-0.4, Math.min(0.8, vel * 0.07));
     anim.rotation += (targetRot - anim.rotation) * 0.18;
 
-    /* Kanat titreşimi: sürekli hafif çırpma */
     anim.wingAngle += anim.wingDir * 0.12;
     if (anim.wingAngle <= 0)   { anim.wingAngle = 0;  anim.wingDir =  1; }
     if (anim.wingAngle >= 1)   { anim.wingAngle = 1;  anim.wingDir = -1; }
 }
 
 function flapAnim(anim) {
-    /* Zıplayınca kanat tam açılır */
     anim.wingAngle = 1;
     anim.wingDir   = -1;
 }
@@ -330,8 +334,10 @@ function spawnParticles(x, y, color, count) {
 function drawParticles() {
     for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
-        p.x += p.vx; p.y += p.vy;
-        p.vy += 0.15; p.vx *= 0.97;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.15;
+        p.vx *= 0.97;
         p.alpha -= p.decay;
         if (p.alpha <= 0) { particles.splice(i, 1); continue; }
         ctx.save();
@@ -355,7 +361,6 @@ function drawBG() {
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    /* Parallax yıldızlar */
     drawStars();
 
     ctx.fillStyle = 'rgba(180,0,0,0.2)';
@@ -392,28 +397,24 @@ function drawBird(b, anim, isOpp) {
     const c2 = isOpp ? '#5a0000' : '#050505';
 
     ctx.save();
-    /* Gövde rotasyonu — merkez etrafında döner */
     ctx.translate(b.x, b.y);
     ctx.rotate(anim.rotation);
 
     ctx.shadowColor = isOpp ? '#cc2222' : '#444444';
     ctx.shadowBlur  = 20;
 
-    /* Gövde */
     const gr = ctx.createRadialGradient(-4, -4, 2, 0, 0, b.r + 4);
     gr.addColorStop(0, c1); gr.addColorStop(1, c2);
     ctx.fillStyle = gr;
     ctx.beginPath(); ctx.arc(0, 0, b.r, 0, Math.PI * 2); ctx.fill();
     ctx.shadowBlur = 0;
 
-    /* Kanat — açılıp kapanır */
-    const wingH = 4 + anim.wingAngle * 7;  // 4px → 11px arası
+    const wingH = 4 + anim.wingAngle * 7;
     ctx.fillStyle = isOpp ? 'rgba(200,50,50,0.55)' : 'rgba(100,100,100,0.55)';
     ctx.beginPath();
     ctx.ellipse(-6, 2 - anim.wingAngle * 5, 9, wingH, -0.3, 0, Math.PI * 2);
     ctx.fill();
 
-    /* Göz */
     ctx.fillStyle = '#fff';
     ctx.beginPath(); ctx.arc(5, -4, 6, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#111';
@@ -421,7 +422,6 @@ function drawBird(b, anim, isOpp) {
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
     ctx.beginPath(); ctx.arc(9, -7, 1.5, 0, Math.PI * 2); ctx.fill();
 
-    /* Gaga */
     ctx.fillStyle = '#e07000';
     ctx.beginPath();
     ctx.moveTo(16, -3); ctx.lineTo(26, -1); ctx.lineTo(16, 3);
@@ -441,26 +441,36 @@ function drawFlash() {
     if (flashAlpha < 0) flashAlpha = 0;
 }
 
-/* ══ ANA DÖNGÜ ════════════════════════════════════════ */
-function mainLoop() {
-    if (!gameRunning && !dying) return;
+let frameCount = 0;
+let lastFpsTime = 0;
+
+function mainLoop(timestamp) {
+    if (!gameRunning && !dying) {
+        raf = requestAnimationFrame(mainLoop);
+        return;
+    }
+
+    // FPS SABİTLEME: Sadece ~60 FPS'de bir kare çiz
+    if (timestamp - lastFpsTime < 16) {  // 1000/60 ≈ 16.67ms
+        raf = requestAnimationFrame(mainLoop);
+        return;
+    }
+    lastFpsTime = timestamp;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawBG();
     drawPipes();
 
     if (gameRunning) {
-        /* Fizik */
+        // Fizik (eski, delta'sız)
         myBird.vel  = Math.min(myBird.vel  + GRAVITY, MAX_VEL);
         myBird.y   += myBird.vel;
         oppBird.vel = Math.min(oppBird.vel + GRAVITY, MAX_VEL);
         oppBird.y  += oppBird.vel;
 
-        /* Kuş animasyonu güncelle */
         updateBirdAnim(myAnim,  myBird.vel);
         updateBirdAnim(oppAnim, oppBird.vel);
 
-        /* Borular */
         for (let i = pipes.length - 1; i >= 0; i--) {
             const p = pipes[i];
             p.x -= PIPE_SPEED;
@@ -478,28 +488,27 @@ function mainLoop() {
                 myBird.x - myBird.r < p.x + PIPE_W) {
                 if (myBird.y - myBird.r < p.top ||
                     myBird.y + myBird.r > p.top + PIPE_GAP) {
-                    killMyBird(); return;
+                    killMyBird();
+                    return;
                 }
             }
             if (p.x + PIPE_W < 0) pipes.splice(i, 1);
         }
 
-        /* Duvar */
         if (myBird.y + myBird.r > canvas.height ||
             myBird.y - myBird.r < 0) {
-            killMyBird(); return;
+            killMyBird();
+            return;
         }
     }
 
-    /* Kuşları çiz */
-    drawBird(myBird,  myAnim,  false);
-    drawBird(oppBird, oppAnim, true);
+    const iAmHost = (myRole === 'host');
+    drawBird(myBird,  myAnim,  !iAmHost);
+    drawBird(oppBird, oppAnim, iAmHost);
 
-    /* Efektler */
     drawParticles();
     drawFlash();
 
-    /* Dying sayaç */
     if (dying) {
         dyingTimer++;
         if (dyingTimer > 50 || (particles.length === 0 && flashAlpha <= 0)) {
@@ -559,9 +568,8 @@ function initCanvas() {
     ctx    = canvas.getContext('2d');
     const mid = canvas.height / 2;
     
-    // ⚠️ velocity'i MUTLAKA 0 veya hafif negatif yap (düşüşü yumuşat)
-    myBird  = { x: 110, y: mid, vel: 0, r: BIRD_R };      // vel: -1.0 yerine 0
-    oppBird = { x: 110, y: mid, vel: 0, r: BIRD_R };      // aynı şekilde
+    myBird  = { x: 110, y: mid, vel: 0, r: BIRD_R };
+    oppBird = { x: 110, y: mid, vel: 0, r: BIRD_R };
     
     myAnim  = makeBirdAnim();
     oppAnim = makeBirdAnim();
@@ -581,17 +589,15 @@ function buildPipes(set) {
 }
 
 function startCountdown(seconds, ps) {
-    // === YENİ EKLENECEK ===
     if (raf) {
         cancelAnimationFrame(raf);
         raf = null;
     }
-    gameRunning = false;   // önceki oyunu kesin durdur
-    // =====================
+    gameRunning = false;
     
     pipeSet = ps;
     showOnly('game');
-    initCanvas();           // ← içinde velocity'ler 0 olacak
+    initCanvas();
     pipes = buildPipes(pipeSet);
     
     myScore  = 0; oppScore  = 0;
@@ -618,11 +624,8 @@ function startCountdown(seconds, ps) {
         countdownEl.classList.add('hidden');
         gameStartTime = Date.now();
         
-        // === YENİ EKLENECEK ===
-        // Kuşların başlangıç hızını tekrar sıfırla (güvenlik için)
         if (myBird)  myBird.vel  = 0;
         if (oppBird) oppBird.vel = 0;
-        // =====================
         
         gameRunning = true;
         raf = requestAnimationFrame(mainLoop);
@@ -633,7 +636,6 @@ function startCountdown(seconds, ps) {
 function showStats(endData) {
     const now = Date.now();
     myAliveMs  = myDiedTime   ? myDiedTime - gameStartTime   : now - gameStartTime;
-    /* oppAliveMs sunucudan gelir */
 
     statMyPipes.textContent  = myPipes;
     statOppPipes.textContent = oppPipes;
@@ -646,6 +648,7 @@ function showStats(endData) {
 /* ══ SOCKET ══════════════════════════════════════════ */
 
 socket.on('roomCreated', d => {
+    myRole = d.role || 'host'; // sunucudan gelen rolü al
     roomCode = d.roomCode; isHost = true;
     roomCodeDisp.textContent = roomCode;
     statusText.textContent   = t('waiting');
@@ -654,6 +657,7 @@ socket.on('roomCreated', d => {
 });
 
 socket.on('roomJoined', d => {
+    myRole = d.role || 'guest'; // sunucudan gelen rolü al
     roomCode = d.roomCode; pipeSet = d.pipeSet;
     roomCodeDisp.textContent = roomCode;
     statusText.textContent   = t('joined');
@@ -693,8 +697,6 @@ const modalClose = document.getElementById('modalClose');
 function openModal() {
     aboutModal.classList.remove('hidden', 'closing');
     aboutModal.classList.add('opening');
-
-    /* opening class'ı animasyon bittikten sonra kaldır */
     setTimeout(() => {
         aboutModal.classList.remove('opening');
     }, 350);
@@ -702,8 +704,6 @@ function openModal() {
 
 function closeModal() {
     aboutModal.classList.add('closing');
-
-    /* Animasyon bitince tamamen gizle */
     setTimeout(() => {
         aboutModal.classList.add('hidden');
         aboutModal.classList.remove('closing');
@@ -756,6 +756,12 @@ socket.on('gameEnded', d => {
 });
 
 socket.on('opponentReadyForRestart', () => {
+    // Eğer oyun sonu ekranındaysak resultText'i değiştir
+    if (!gameOverScreen.classList.contains('hidden')) {
+        resultText.textContent = t('opponentWantsRestart');
+        resultText.style.color = '#ff8844';
+        resultIcon.textContent = '🔄';
+    }
     statusText.textContent = t('opponentReadyRestart');
 });
 
@@ -803,7 +809,6 @@ socket.on('pong', () => {
     currentPing = Date.now() - pingStart;
     pingValueEl.textContent = `${currentPing} ms`;
     
-    // İkon ve renk değişimi
     if (currentPing < 80) {
         pingIconEl.textContent = '📶';
         pingValueEl.style.color = '#0f0';
@@ -850,19 +855,16 @@ const langBtn = document.getElementById('langBtn');
 const langMenu = document.getElementById('langMenu');
 const langOptions = document.querySelectorAll('.lang-option');
 
-// Menüyü aç/kapat
 langBtn.onclick = () => {
     langMenu.classList.toggle('hidden');
 };
 
-// Menü dışına tıklanınca kapat
 document.addEventListener('click', (e) => {
     if (!langBtn.contains(e.target) && !langMenu.contains(e.target)) {
         langMenu.classList.add('hidden');
     }
 });
 
-// Dil seçimi
 langOptions.forEach(opt => {
     opt.onclick = () => {
         const newLang = opt.dataset.lang;
@@ -874,18 +876,15 @@ langOptions.forEach(opt => {
         currentLang = newLang;
         localStorage.setItem('lang', currentLang);
         
-        // Menüdeki seçiliyi güncelle
         langOptions.forEach(o => o.classList.remove('selected'));
         opt.classList.add('selected');
         
-        // Tüm UI'ı güncelle
         updateUILanguage();
         
         langMenu.classList.add('hidden');
     };
 });
 
-// Sayfa yüklendiğinde dil menüsünde doğru seçiliyi işaretle
 (function initLangSelection() {
     const selected = document.querySelector(`.lang-option[data-lang="${currentLang}"]`);
     if (selected) {
@@ -894,41 +893,33 @@ langOptions.forEach(opt => {
     }
 })();
 
-// Tüm metinleri güncelleyen fonksiyon
 function updateUILanguage() {
-    // Placeholder
     function updatePlaceholder() {
         const joinInput = document.getElementById('joinInput');
         if (joinInput) joinInput.placeholder = t('enterCode');
     }
     updatePlaceholder();
 
-    // Status text (mevcut duruma göre en iyi tahmin)
     const st = statusText.textContent;
     if (st.includes('Rakip bekleniyor') || st.includes('Waiting') || st.includes('Warte')) statusText.textContent = t('waiting');
     else if (st.includes('Bağlandı') || st.includes('Connected') || st.includes('Verbunden')) statusText.textContent = t('joined');
     else if (st.includes('Rakip hazır') || st.includes('Opponent ready') || st.includes('Gegner bereit')) statusText.textContent = t('opponentReady');
     else if (st.includes('Rakip hazır, sen') || st.includes('Opponent ready, are') || st.includes('Gegner bereit, bist')) statusText.textContent = t('opponentReadyRestart');
 
-    // Ana menü
     document.getElementById('createBtn').innerHTML = t('createRoom');
     document.getElementById('joinBtn').textContent = t('joinRoom');
     document.querySelector('.divider span').textContent = t('or');
     document.querySelector('.hint').textContent = t('hint');
     
-    // Bekleme odası
     document.querySelector('.label').textContent = t('roomCodeLabel');
     document.getElementById('startBtn').innerHTML = t('start');
     
-    // Oyun HUD
     document.querySelector('.hud-box.you .hud-label').textContent = t('you');
     document.querySelector('.hud-box.opp .hud-label').textContent = t('opponent');
     
-    // Oyun sonu butonları
     document.getElementById('restartBtn').textContent = t('restart');
     document.getElementById('menuBtn').textContent = t('menu');
     
-    // İstatistik etiketleri
     const statBoxes = document.querySelectorAll('.stat-box');
     if (statBoxes.length >= 3) {
         statBoxes[0].querySelector('.stat-label').textContent = '🏁 ' + t('pipes');
@@ -936,14 +927,12 @@ function updateUILanguage() {
         statBoxes[2].querySelector('.stat-label').textContent = '⏱️ ' + t('time');
     }
     
-    // Modal
     const modalTitle = document.querySelector('.modal-title');
     if (modalTitle) modalTitle.textContent = t('aboutTitle');
     const modalDesc = document.querySelector('.modal-desc');
     if (modalDesc) modalDesc.innerHTML = t('aboutDesc').replace(/\n/g, '<br>');
     
-    // Oyun sonu mesajları (eğer gösteriliyorsa)
-    const rt = resultText.textContent;
+        const rt = resultText.textContent;
     if (rt.includes('ZAFER') || rt.includes('VICTORY') || rt.includes('SIEG')) {
         resultText.textContent = t('victory');
     } else if (rt.includes('YENİLDİN') || rt.includes('DEFEATED') || rt.includes('NIEDERLAGE')) {
@@ -952,10 +941,11 @@ function updateUILanguage() {
         resultText.textContent = t('draw');
     } else if (rt.includes('Rakip bekleniyor') || rt.includes('Waiting for opponent') || rt.includes('Warte auf Gegner')) {
         resultText.textContent = t('restartWait');
+    } else if (rt.includes('Rakip seninle') || rt.includes('Opponent wants') || rt.includes('Gegner möchte')) {
+        resultText.textContent = t('opponentWantsRestart');
     }
 }
 
-// Sayfa yüklendiğinde UI'ı başlangıç diline ayarla
 document.addEventListener('DOMContentLoaded', () => {
     updateUILanguage();
 });
