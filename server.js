@@ -21,24 +21,23 @@ function generatePipeSet(n = 20) {
 io.on('connection', socket => {
     console.log(`✅ Bağlandı: ${socket.id}`);
 
-    // ---------- PİNG PONG (YENİ) ----------
+    // ---------- PİNG PONG ----------
     socket.on('ping', () => {
         socket.emit('pong');
     });
-    // -------------------------------------
 
     /* ── Oda Oluştur ── */
     socket.on('createRoom', () => {
         const code = Math.random().toString(36).substring(2, 8).toUpperCase();
         rooms[code] = {
-            players:     [{ id: socket.id, score: 0, alive: true, ready: false }],
+            players:     [{ id: socket.id, score: 0, alive: true, ready: false, role: 'host' }],
             host:        socket.id,
             pipeSet:     generatePipeSet(),
             gameStarted: false,
             gameOver:    false
         };
         socket.join(code);
-        socket.emit('roomCreated', { roomCode: code, isHost: true });
+        socket.emit('roomCreated', { roomCode: code, isHost: true, role: 'host' });
         console.log(`🏠 Oda: ${code}`);
     });
 
@@ -49,9 +48,9 @@ io.on('connection', socket => {
         if (room.players.length>=2) return socket.emit('error', '❌ Oda dolu!');
         if (room.gameStarted)       return socket.emit('error', '❌ Oyun başladı!');
 
-        room.players.push({ id: socket.id, score: 0, alive: true, ready: false });
+        room.players.push({ id: socket.id, score: 0, alive: true, ready: false, role: 'guest' });
         socket.join(code);
-        socket.emit('roomJoined', { roomCode: code, pipeSet: room.pipeSet });
+        socket.emit('roomJoined', { roomCode: code, pipeSet: room.pipeSet, role: 'guest' });
         io.to(room.host).emit('opponentJoined', { roomCode: code });
         console.log(`👤 ${socket.id} → ${code}`);
     });
@@ -64,7 +63,7 @@ io.on('connection', socket => {
         if (room.gameStarted)                 return;
 
         room.gameOver  = false;
-        room.startedAt = Date.now() + 3000; // geri sayım dahil
+        room.startedAt = Date.now() + 3000;
         room.players.forEach(p => {
             p.score  = 0;
             p.alive  = true;
