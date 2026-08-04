@@ -131,12 +131,14 @@ const statMyTime   = document.getElementById('statMyTime');
 const statOppTime  = document.getElementById('statOppTime');
 
 /* ── Fizik ───────────────────────────────────────── */
-const GRAVITY    = 0.04;
-const FLAP_FORCE = -2.5;  
+const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+const GRAVITY    = isMobile ? 0.08 : 0.04;     // mobilde daha hızlı düşüş
+const FLAP_FORCE = isMobile ? -4.0 : -2.5;     // mobilde daha güçlü zıplama
 const MAX_VEL    = 7;
 const PIPE_W     = 68;
 const PIPE_GAP   = 188;
-const PIPE_SPEED = 1.5; 
+const PIPE_SPEED = isMobile ? 2.8 : 1.5;       // mobilde daha hızlı borular
 const BIRD_R     = 15;
 
 /* ── Durum ───────────────────────────────────────── */
