@@ -134,11 +134,11 @@ const statOppTime  = document.getElementById('statOppTime');
 const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 const GRAVITY    = isMobile ? 0.25 : 0.04;
-const FLAP_FORCE = isMobile ? -8.0 : -2.5;     // -10 yerine -8, daha az güçlü zıplama
+const FLAP_FORCE = isMobile ? -6.0 : -2.5;     // -10 yerine -8, daha az güçlü zıplama
 const MAX_VEL    = 7;
 const PIPE_W     = 68;
 const PIPE_GAP   = 188;
-const PIPE_SPEED = isMobile ? 6.5 : 1.5;       // 7.0'dan 6.5'e düştü (0.50 azalma)
+const PIPE_SPEED = isMobile ? 4.5 : 1.5;       // 7.0'dan 6.5'e düştü (0.50 azalma)
 const BIRD_R     = 15;
 /* ── Durum ───────────────────────────────────────── */
 let canvas, ctx;
