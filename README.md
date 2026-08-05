@@ -11,11 +11,25 @@ Made With ❤️ by **Phantomware**
 
 ---
 
-<img src="art/RESIM1.png" width="100%">
+## 📸 Screenshots
+
+<img src="art/ss/1.png" width="100%">
 <br><br>
-<img src="art/RESIM2.png" width="100%">
+<img src="art/ss/2.png" width="100%">
 <br><br>
-<img src="art/RESIM3.png" width="100%">
+<img src="art/ss/3.png" width="100%">
+<br><br>
+<img src="art/ss/4.png" width="100%">
+<br><br>
+<img src="art/ss/5.png" width="100%">
+<br><br>
+<img src="art/ss/6.png" width="100%">
+<br><br>
+<img src="art/ss/7.png" width="100%">
+<br><br>
+<p align="center">
+  <img src="art/ss/8.png" width="300">
+</p>
 
 ---
 
