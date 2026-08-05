@@ -11,6 +11,14 @@ Made With ❤️ by **Phantomware**
 
 ---
 
+<img src="art/RESIM1.png" width="100%">
+<br><br>
+<img src="art/RESIM2.png" width="100%">
+<br><br>
+<img src="art/RESIM3.png" width="100%">
+
+---
+
 ![Phantomware Logo](./art/Phantomware_TP_Logo.png)
 
 # Phantomware Official Website
