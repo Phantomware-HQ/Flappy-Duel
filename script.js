@@ -1,13 +1,10 @@
 const socket = io();
 
-/* ═══════════════════════════════════════════════════
-   ROL BİLGİSİ
-   ═══════════════════════════════════════════════════ */
+let selectedMap = 'classic';
+
 let myRole = null;
 
-/* ═══════════════════════════════════════════════════
-   MARKET VE ENVANTER SİSTEMİ
-   ═══════════════════════════════════════════════════ */
+
 const SKINS = {
   default: { id: 'default', name: 'Classic Black', nameTr: 'Klasik Siyah', nameDe: 'Klassik Schwarz', price: 0, color1: '#222222', color2: '#050505', desc: 'Default skin', descTr: 'Varsayılan kostüm', descDe: 'Standard-Skin' },
   golden:  { id: 'golden',  name: 'Golden Eagle', nameTr: 'Altın Kartal', nameDe: 'Goldadler', price: 5, color1: '#ffcc00', color2: '#996600', desc: 'Shine bright', descTr: 'Parlak uç', descDe: 'Glänzender Flug' },
@@ -59,12 +56,9 @@ function getSkinDesc(skinId) {
   return skin.desc;
 }
 
-/* ═══════════════════════════════════════════════════
-   ÇEVİRİ SİSTEMİ
-   ═══════════════════════════════════════════════════ */
 const translations = {
   en: {
-    createRoom: '✦ Create Room', joinRoom: 'Join', or: 'or', hint: 'Space or tap to flap',
+    createRoom: '✦ Create Room', joinRoom: 'Join', or: 'or',
     roomCodeLabel: 'ROOM CODE', waiting: 'Waiting for opponent…', opponentWantsRestart: 'Opponent wants to play again!',
     start: '▶ START', you: 'YOU', opponent: 'OPPONENT', victory: 'VICTORY!', defeat: 'DEFEATED', draw: 'DRAW',
     restart: 'Play Again', menu: 'Main Menu', pipes: 'Pipes', flaps: 'Flaps', time: 'Time',
@@ -72,15 +66,18 @@ const translations = {
     loading: '-- ms', restartWait: 'Waiting for opponent…', enterCode: 'ENTER CODE',
     joined: '✅ Connected! Host will start…', opponentReady: '🎮 Opponent ready!', opponentReadyRestart: 'Opponent ready, are you?',
     market: '🛒 Market', coins: 'Coins', buy: 'Buy', use: 'Equip', owned: '✅ Owned', equipped: 'Equipped',
-    price: 'Price', free: 'Free', notEnoughCoins: 'Not enough coins!', purchased: 'Purchased!', marketTitle: 'MARKET',developer: 'DEVELOPER',
-vfxArtist: 'VFX ARTIST',
-version: 'VERSION',
-engine: 'ENGINE',
-madeWith: 'MADE WITH',
-by: 'BY',
+    price: 'Price', free: 'Free', notEnoughCoins: 'Not enough coins!', purchased: 'Purchased!', marketTitle: 'MARKET',
+    developer: 'DEVELOPER', vfxArtist: 'VFX ARTIST', version: 'VERSION', engine: 'ENGINE',
+    madeWith: 'MADE WITH', by: 'BY',
+    copied: '✅ Copied!',
+    coinEarned: 'You earned',
+coinLost: 'You lost',
+coins: 'coins',
+    opponentLeft: 'Opponent left!',
+    mapSelect: 'SELECT MAP', mapClassic: '🔥 Classic', mapForest: '🌲 Forest', mapIce: '❄️ Ice',
   },
   tr: {
-    createRoom: '✦ Oda Oluştur', joinRoom: 'Katıl', or: 'veya', hint: 'Boşluk tuşu veya ekrana dokun',
+    createRoom: '✦ Oda Oluştur', joinRoom: 'Katıl', or: 'veya',
     roomCodeLabel: 'ODA KODU', waiting: 'Rakip bekleniyor…', opponentWantsRestart: 'Rakip seninle tekrar oynamak istiyor!',
     start: '▶ BAŞLAT', you: 'SEN', opponent: 'RAKİP', victory: 'ZAFER!', defeat: 'YENİLDİN', draw: 'BERABERE',
     restart: 'Tekrar Oyna', menu: 'Ana Menü', pipes: 'Boru', flaps: 'Zıplama', time: 'Süre',
@@ -88,15 +85,18 @@ by: 'BY',
     loading: '-- ms', restartWait: 'Rakip bekleniyor…', enterCode: 'KOD GİR',
     joined: '✅ Bağlandı! Host başlatacak…', opponentReady: '🎮 Rakip hazır!', opponentReadyRestart: 'Rakip hazır, sen de hazır mısın?',
     market: '🛒 Market', coins: 'Para', buy: 'Satın Al', use: 'Kuşan', owned: '✅ Sahip', equipped: 'Kuşanıldı',
-    price: 'Fiyat', free: 'Ücretsiz', notEnoughCoins: 'Yetersiz para!', purchased: 'Satın alındı!', marketTitle: 'MARKET',developer: 'GELİŞTİRİCİ',
-vfxArtist: 'VFX SANATÇISI',
-version: 'SÜRÜM',
-engine: 'MOTOR',
-madeWith: 'YAPIM',
-by: 'TARAFINDAN',
+    price: 'Fiyat', free: 'Ücretsiz', notEnoughCoins: 'Yetersiz para!', purchased: 'Satın alındı!', marketTitle: 'MARKET',
+    developer: 'GELİŞTİRİCİ', vfxArtist: 'VFX SANATÇISI', version: 'SÜRÜM', engine: 'MOTOR',
+    madeWith: 'YAPIM', by: 'TARAFINDAN',
+    copied: '✅ Kopyalandı!',
+    opponentLeft: 'Rakip ayrıldı!',
+    coinEarned: 'Kazandın',
+coinLost: 'Kaybettin',
+coins: 'coin',
+    mapSelect: 'HARİTA SEÇ', mapClassic: '🔥 Klasik', mapForest: '🌲 Orman', mapIce: '❄️ Buz',
   },
   de: {
-    createRoom: '✦ Raum erstellen', joinRoom: 'Beitreten', or: 'oder', hint: 'Leertaste oder tippen',
+    createRoom: '✦ Raum erstellen', joinRoom: 'Beitreten', or: 'oder',
     roomCodeLabel: 'RAUMCODE', waiting: 'Warte auf Gegner…', opponentWantsRestart: 'Gegner möchte erneut spielen!',
     start: '▶ START', you: 'DU', opponent: 'GEGNER', victory: 'SIEG!', defeat: 'NIEDERLAGE', draw: 'UNENTSCHIEDEN',
     restart: 'Erneut spielen', menu: 'Hauptmenü', pipes: 'Röhren', flaps: 'Flügelschläge', time: 'Zeit',
@@ -104,20 +104,23 @@ by: 'TARAFINDAN',
     loading: '-- ms', restartWait: 'Warte auf Gegner…', enterCode: 'CODE EINGEBEN',
     joined: '✅ Verbunden! Host startet…', opponentReady: '🎮 Gegner bereit!', opponentReadyRestart: 'Gegner bereit, bist du bereit?',
     market: '🛒 Markt', coins: 'Münzen', buy: 'Kaufen', use: 'Ausrüsten', owned: '✅ Besitzt', equipped: 'Ausgerüstet',
-    price: 'Preis', free: 'Kostenlos', notEnoughCoins: 'Nicht genug Münzen!', purchased: 'Gekauft!', marketTitle: 'MARKT',developer: 'ENTWICKLER',
-vfxArtist: 'VFX-KÜNSTLER',
-version: 'VERSION',
-engine: 'ENGINE',
-madeWith: 'GEMACHT MIT',
-by: 'VON',
+    price: 'Preis', free: 'Kostenlos', notEnoughCoins: 'Nicht genug Münzen!', purchased: 'Gekauft!', marketTitle: 'MARKT',
+    developer: 'ENTWICKLER', vfxArtist: 'VFX-KÜNSTLER', version: 'VERSION', engine: 'ENGINE',
+    madeWith: 'GEMACHT MIT', by: 'VON',
+    copied: '✅ Kopiert!',
+    coinEarned: 'Du hast',
+coinLost: 'Du hast',
+coins: 'Münzen',
+    opponentLeft: 'Gegner hat das Spiel verlassen!',
+    mapSelect: 'KARTE WÄHLEN', mapClassic: '🔥 Klassik', mapForest: '🌲 Wald', mapIce: '❄️ Eis',
   }
 };
 
 let currentLang = localStorage.getItem('lang') || 'en';
 function t(key) { return translations[currentLang]?.[key] || translations.en[key] || key; }
 
-/* ── DOM ─────────────────────────────────────────── */
 const menu           = document.getElementById('menu');
+const mapSelectEl    = document.getElementById('mapSelect');
 const waiting        = document.getElementById('waiting');
 const gameScreen     = document.getElementById('game');
 const gameOverScreen = document.getElementById('gameOver');
@@ -142,7 +145,6 @@ const statOppFlaps = document.getElementById('statOppFlaps');
 const statMyTime   = document.getElementById('statMyTime');
 const statOppTime  = document.getElementById('statOppTime');
 
-/* ── Fizik ───────────────────────────────────────── */
 const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 const GRAVITY    = isMobile ? 0.25 : 0.04;
 const FLAP_FORCE = isMobile ? -4.0 : -2.5;
@@ -152,7 +154,6 @@ const PIPE_GAP   = 188;
 const PIPE_SPEED = isMobile ? 6.5 : 1.5;
 const BIRD_R     = 15;
 
-/* ── Durum ───────────────────────────────────────── */
 let canvas, ctx;
 let myBird, oppBird;
 let pipes = [];
@@ -174,7 +175,6 @@ let dying = false;
 let dyingTimer = 0;
 let stars = [];
 
-/* ── Yıldızlar, Ses, Parçacık, Çizim fonksiyonları aynı kalacak ── */
 function initStars() {
     stars = [];
     for (let i = 0; i < 60; i++) stars.push({ x: Math.random() * 800, y: Math.random() * 440, r: 0.6 + Math.random() * 1.2, speed: 0.1 + Math.random() * 0.15, alpha: 0.2 + Math.random() * 0.4 });
@@ -263,26 +263,93 @@ function drawParticles() {
 }
 
 function drawBG() {
-    const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    g.addColorStop(0, '#0a0303'); g.addColorStop(0.5, '#120505'); g.addColorStop(1, '#0d0202');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (selectedMap === 'forest') {
+        const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        g.addColorStop(0, '#0a1a0a'); g.addColorStop(0.5, '#0d2a0d'); g.addColorStop(1, '#061206');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'rgba(0,180,0,0.2)'; ctx.fillRect(0, canvas.height - 3, canvas.width, 3);
+    } else if (selectedMap === 'ice') {
+        const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        g.addColorStop(0, '#0a1628'); g.addColorStop(0.5, '#0d2040'); g.addColorStop(1, '#060e1a');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'rgba(100,180,255,0.2)'; ctx.fillRect(0, canvas.height - 3, canvas.width, 3);
+    } else {
+        const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        g.addColorStop(0, '#0a0303'); g.addColorStop(0.5, '#120505'); g.addColorStop(1, '#0d0202');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'rgba(180,0,0,0.2)'; ctx.fillRect(0, canvas.height - 3, canvas.width, 3);
+    }
     drawStars();
-    ctx.fillStyle = 'rgba(180,0,0,0.2)'; ctx.fillRect(0, canvas.height - 3, canvas.width, 3);
 }
 function drawPipes() {
     pipes.forEach(p => {
+        let pipeColor1, pipeColor2, pipeRim, strokeColor;
+        
+        if (selectedMap === 'forest') {
+            pipeColor1 = '#1a3a1a';
+            pipeColor2 = '#2a5a2a';
+            pipeRim = '#3a6a3a';
+            strokeColor = 'rgba(0,180,0,0.4)';
+        } else if (selectedMap === 'ice') {
+            pipeColor1 = '#1a2a4a';
+            pipeColor2 = '#2a4a6a';
+            pipeRim = '#3a5a8a';
+            strokeColor = 'rgba(100,180,255,0.4)';
+        } else {
+            pipeColor1 = '#2a0505';
+            pipeColor2 = '#500a0a';
+            pipeRim = '#6a1010';
+            strokeColor = 'rgba(220,40,40,0.4)';
+        }
+
         const g1 = ctx.createLinearGradient(p.x, 0, p.x + PIPE_W, 0);
-        g1.addColorStop(0, '#2a0505'); g1.addColorStop(0.5, '#500a0a'); g1.addColorStop(1, '#2a0505');
-        ctx.fillStyle = g1; ctx.fillRect(p.x, 0, PIPE_W, p.top - 12);
-        ctx.fillStyle = '#6a1010'; ctx.fillRect(p.x - 6, p.top - 26, PIPE_W + 12, 26);
-        ctx.strokeStyle = 'rgba(220,40,40,0.4)'; ctx.lineWidth = 1.5; ctx.strokeRect(p.x - 6, p.top - 26, PIPE_W + 12, 26);
+        g1.addColorStop(0, pipeColor1);
+        g1.addColorStop(0.5, pipeColor2);
+        g1.addColorStop(1, pipeColor1);
+        ctx.fillStyle = g1;
+        ctx.fillRect(p.x, 0, PIPE_W, p.top - 12);
+        
+        ctx.fillStyle = pipeRim;
+        ctx.fillRect(p.x - 6, p.top - 26, PIPE_W + 12, 26);
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(p.x - 6, p.top - 26, PIPE_W + 12, 26);
+
         const bY = p.top + PIPE_GAP;
         const g2 = ctx.createLinearGradient(p.x, 0, p.x + PIPE_W, 0);
-        g2.addColorStop(0, '#2a0505'); g2.addColorStop(0.5, '#500a0a'); g2.addColorStop(1, '#2a0505');
-        ctx.fillStyle = g2; ctx.fillRect(p.x, bY + 14, PIPE_W, canvas.height - bY - 14);
-        ctx.fillStyle = '#6a1010'; ctx.fillRect(p.x - 6, bY, PIPE_W + 12, 26);
-        ctx.strokeStyle = 'rgba(220,40,40,0.4)'; ctx.lineWidth = 1.5; ctx.strokeRect(p.x - 6, bY, PIPE_W + 12, 26);
+        g2.addColorStop(0, pipeColor1);
+        g2.addColorStop(0.5, pipeColor2);
+        g2.addColorStop(1, pipeColor1);
+        ctx.fillStyle = g2;
+        ctx.fillRect(p.x, bY + 14, PIPE_W, canvas.height - bY - 14);
+        
+        ctx.fillStyle = pipeRim;
+        ctx.fillRect(p.x - 6, bY, PIPE_W + 12, 26);
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(p.x - 6, bY, PIPE_W + 12, 26);
     });
+}
+
+function showCoinChange(amount) {
+    const resultText = document.getElementById('resultText');
+    const coinMsg = document.createElement('div');
+    coinMsg.id = 'coinChangeMsg';
+    coinMsg.style.cssText = `
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-top: -5px;
+        animation: fadeInUp 0.5s ease-out;
+        color: ${amount >= 0 ? '#ffcc00' : '#ff4444'};
+    `;
+    coinMsg.textContent = amount >= 0 
+        ? `🪙 ${t('coinEarned')} +${amount} ${t('coins')}!`
+        : `🪙 ${t('coinLost')} ${amount} ${t('coins')}!`;
+    
+    const oldMsg = document.getElementById('coinChangeMsg');
+    if (oldMsg) oldMsg.remove();
+    
+    resultText.parentElement.insertBefore(coinMsg, resultText.nextSibling);
 }
 
 function drawBird(b, anim, isOpp) {
@@ -308,17 +375,19 @@ function drawBird(b, anim, isOpp) {
     ctx.fillStyle = '#e07000'; ctx.beginPath(); ctx.moveTo(16, -3); ctx.lineTo(26, -1); ctx.lineTo(16, 3); ctx.closePath(); ctx.fill();
     ctx.restore();
 }
+
 function drawFlash() {
     if (flashAlpha <= 0) return;
     ctx.save(); ctx.globalAlpha = flashAlpha; ctx.fillStyle = flashColor; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.restore();
     flashAlpha -= 0.04; if (flashAlpha < 0) flashAlpha = 0;
 }
 
-/* ══ ANA DÖNGÜ ════════════════════════════════════════ */
 function mainLoop() {
     if (!gameRunning && !dying) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawBG(); drawPipes();
+    drawBG();
+    drawPipes();
+    
     if (gameRunning) {
         myBird.vel = Math.min(myBird.vel + GRAVITY, MAX_VEL); myBird.y += myBird.vel;
         oppBird.vel = Math.min(oppBird.vel + GRAVITY, MAX_VEL); oppBird.y += oppBird.vel;
@@ -337,10 +406,16 @@ function mainLoop() {
         }
         if (myBird.y + myBird.r > canvas.height || myBird.y - myBird.r < 0) { killMyBird(); return; }
     }
+    
+    
+    
     const iAmHost = (myRole === 'host');
     drawBird(myBird, myAnim, !iAmHost);
     drawBird(oppBird, oppAnim, iAmHost);
-    drawParticles(); drawFlash();
+    
+    drawParticles();
+    drawFlash();
+    
     if (dying) {
         dyingTimer++;
         if (dyingTimer > 50 || (particles.length === 0 && flashAlpha <= 0)) {
@@ -359,13 +434,48 @@ function killMyBird() {
 }
 function triggerBump(el) { el.classList.remove('score-bump'); void el.offsetWidth; el.classList.add('score-bump'); }
 function flap() { if (!gameRunning) return; myBird.vel = FLAP_FORCE; myFlaps++; flapAnim(myAnim); playFlap(); socket.emit('flap', roomCode); }
-function showOnly(id) { ['menu','waiting','game','gameOver'].forEach(s => document.getElementById(s).classList.toggle('hidden', s !== id)); }
+function showOnly(id) {
+    const screens = ['menu', 'mapSelect', 'waiting', 'game', 'gameOver'];
+    const currentVisible = screens.find(s => !document.getElementById(s).classList.contains('hidden'));
+    
+    if (currentVisible === id) return;
+    
+    const nextEl = document.getElementById(id);
+    
+    if (currentVisible) {
+        const currentEl = document.getElementById(currentVisible);
+        currentEl.classList.add('fade-out');
+        currentEl.addEventListener('animationend', function handler() {
+            currentEl.removeEventListener('animationend', handler);
+            currentEl.classList.add('hidden');
+            currentEl.classList.remove('fade-out');
+            
+            if (nextEl) {
+                nextEl.classList.remove('hidden');
+                nextEl.classList.add('fade-in');
+                nextEl.addEventListener('animationend', function handler2() {
+                    nextEl.removeEventListener('animationend', handler2);
+                    nextEl.classList.remove('fade-in');
+                });
+            }
+        });
+    } else if (nextEl) {
+        nextEl.classList.remove('hidden');
+        nextEl.classList.add('fade-in');
+        nextEl.addEventListener('animationend', function handler() {
+            nextEl.removeEventListener('animationend', handler);
+            nextEl.classList.remove('fade-in');
+        });
+    }
+}
 function initCanvas() {
     canvas = document.getElementById('gameCanvas'); ctx = canvas.getContext('2d');
     const mid = canvas.height / 2;
-    myBird = { x: 110, y: mid, vel: 0, r: BIRD_R }; oppBird = { x: 110, y: mid, vel: 0, r: BIRD_R };
+    myBird = { x: 110, y: mid, vel: 0, r: BIRD_R };
+    oppBird = { x: 110, y: mid, vel: 0, r: BIRD_R };
     myAnim = makeBirdAnim(); oppAnim = makeBirdAnim();
-    particles = []; flashAlpha = 0; dying = false; dyingTimer = 0; initStars();
+    particles = []; flashAlpha = 0; dying = false; dyingTimer = 0;
+    initStars();
 }
 function buildPipes(set) { const list = []; let x = canvas.width + 60; set.forEach(s => { list.push({ x, top: s.top, passed: false }); x += 275; }); return list; }
 function startCountdown(seconds, ps) {
@@ -388,7 +498,6 @@ function showStats(endData) {
     statMyTime.textContent = ((myAliveMs / 1000) | 0) + 's'; statOppTime.textContent = ((endData.oppAliveMs / 1000) | 0) + 's';
 }
 
-/* ══ SOCKET ══════════════════════════════════════════ */
 socket.on('roomCreated', d => {
     myRole = d.role || 'host'; roomCode = d.roomCode; isHost = true;
     roomCodeDisp.textContent = roomCode; statusText.textContent = t('waiting');
@@ -396,15 +505,25 @@ socket.on('roomCreated', d => {
 });
 socket.on('roomJoined', d => {
     myRole = d.role || 'guest'; roomCode = d.roomCode; pipeSet = d.pipeSet;
+    selectedMap = d.map || 'classic';
     roomCodeDisp.textContent = roomCode; statusText.textContent = t('joined');
     startBtn.classList.add('hidden'); showOnly('waiting');
 });
-socket.on('opponentJoined', () => { statusText.textContent = t('opponentReady'); startBtn.classList.remove('hidden'); });
-socket.on('countdown', d => startCountdown(d.seconds, d.pipeSet));
+socket.on('opponentJoined', () => {
+    statusText.textContent = t('opponentReady');
+    startBtn.classList.remove('hidden');
+    if (isHost) { waiting.classList.add('host-glow'); }
+});
+socket.on('countdown', d => {
+    if (isHost && waiting.classList.contains('host-glow')) {
+        waiting.classList.remove('host-glow');
+    }
+    selectedMap = d.map || 'classic';
+    startCountdown(d.seconds, d.pipeSet);
+});
 socket.on('opponentFlapped', () => { if (oppBird) { oppBird.vel = FLAP_FORCE; oppFlaps++; flapAnim(oppAnim); } });
 socket.on('scoreUpdated', d => { if (d.playerId !== socket.id) { oppScore = d.score; oppPipes = d.score; oppScoreEl.textContent = oppScore; triggerBump(oppScoreEl); } });
 
-/* ── Hakkında Modal ── */
 const aboutModal = document.getElementById('aboutModal');
 const aboutBtn = document.getElementById('aboutBtn');
 const modalClose = document.getElementById('modalClose');
@@ -422,26 +541,114 @@ socket.on('opponentDied', () => {
 socket.on('gameEnded', d => {
     gameRunning = false; dying = false; cancelAnimationFrame(raf); particles = []; flashAlpha = 0;
     showStats(d); showOnly('gameOver');
-    if (d.winner === socket.id) { resultIcon.textContent = '🏆'; resultText.textContent = t('victory'); resultText.style.color = '#ff4444'; addCoins(2); }
-    else if (d.winner === 'draw') { resultIcon.textContent = '🤝'; resultText.textContent = t('draw'); resultText.style.color = '#ff8844'; addCoins(1); }
-    else { resultIcon.textContent = '💀'; resultText.textContent = t('defeat'); resultText.style.color = '#882222'; }
+    
+    let coinChange = 0;
+    
+    if (d.winner === socket.id) {
+        resultIcon.textContent = '🏆';
+        resultText.textContent = t('victory');
+        resultText.style.color = '#3ddc84';
+        gameOverScreen.style.background = '#0a1a0a';
+        gameOverScreen.style.borderColor = 'rgba(0,180,0,0.5)';
+        gameOverScreen.style.boxShadow = '0 0 40px rgba(0,180,0,0.3), 0 8px 40px rgba(0,0,0,0.7)';
+        addCoins(2);
+        coinChange = 2;
+    } else if (d.winner === 'draw') {
+        resultIcon.textContent = '🤝';
+        resultText.textContent = t('draw');
+        resultText.style.color = '#ffaa00';
+        gameOverScreen.style.background = '#1a0f00';
+        gameOverScreen.style.borderColor = 'rgba(255,136,0,0.5)';
+        gameOverScreen.style.boxShadow = '0 0 40px rgba(255,136,0,0.3), 0 8px 40px rgba(0,0,0,0.7)';
+        addCoins(1);
+        coinChange = 1;
+    } else {
+        resultIcon.textContent = '💀';
+        resultText.textContent = t('defeat');
+        resultText.style.color = '#ff4444';
+        gameOverScreen.style.background = '#1a0a0a';
+        gameOverScreen.style.borderColor = 'rgba(200,20,20,0.5)';
+        gameOverScreen.style.boxShadow = '0 0 40px rgba(200,20,20,0.3), 0 8px 40px rgba(0,0,0,0.7)';
+        spendCoins(1);
+        coinChange = -1;
+    }
+    
+    showCoinChange(coinChange);
 });
 socket.on('opponentReadyForRestart', () => {
     if (!gameOverScreen.classList.contains('hidden')) { resultText.textContent = t('opponentWantsRestart'); resultText.style.color = '#ff8844'; resultIcon.textContent = '🔄'; }
     statusText.textContent = t('opponentReadyRestart');
 });
 socket.on('menuRedirect', () => { roomCode = null; isHost = false; document.getElementById('joinInput').value = ''; showOnly('menu'); });
-socket.on('opponentLeft', () => { alert('Rakip ayrıldı!'); location.reload(); });
+socket.on('opponentLeft', () => {
+    alert(t('opponentLeft'));
+    if (!menu.classList.contains('hidden')) return;
+    showOnly('menu');
+});
 socket.on('error', msg => alert(msg));
 
-/* ══ BUTONLAR ══ */
-document.getElementById('createBtn').onclick = () => socket.emit('createRoom');
+
+roomCodeDisp.style.cursor = 'pointer';
+roomCodeDisp.title = 'Kopyalamak için tıkla';
+
+roomCodeDisp.onclick = () => {
+    const code = roomCodeDisp.textContent;
+    if (!code || code === '------') return;
+    
+    navigator.clipboard.writeText(code).then(() => {
+        showCopyToast();
+    }).catch(() => {
+        const input = document.createElement('input');
+        input.value = code;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        showCopyToast();
+    });
+};
+
+function showCopyToast() {
+    const oldToast = document.querySelector('.copy-toast');
+    if (oldToast) oldToast.remove();
+    
+    const rect = roomCodeDisp.getBoundingClientRect();
+    
+    const toast = document.createElement('div');
+    toast.className = 'copy-toast';
+    toast.textContent = t('copied');
+    
+    toast.style.position = 'fixed';
+    toast.style.left = rect.left + rect.width / 2 + 'px';
+    toast.style.top = rect.top - 10 + 'px';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.zIndex = '9999';
+    
+    document.body.appendChild(toast);
+    
+    toast.addEventListener('animationend', () => {
+        toast.remove();
+    });
+}
+document.getElementById('createBtn').onclick = () => {
+    document.querySelectorAll('.map-option').forEach(o => o.classList.remove('selected'));
+    
+    showOnly('mapSelect');
+    
+    document.querySelectorAll('.map-option').forEach(opt => {
+        opt.onclick = () => {
+            document.querySelectorAll('.map-option').forEach(o => o.classList.remove('selected'));
+            opt.classList.add('selected');
+            selectedMap = opt.dataset.map;
+            socket.emit('createRoom', { map: selectedMap });
+        };
+    });
+};
 document.getElementById('joinBtn').onclick = () => { const c = document.getElementById('joinInput').value.trim().toUpperCase(); if (c) socket.emit('joinRoom', c); };
 startBtn.onclick = () => { if (roomCode) socket.emit('startGame', roomCode); };
 document.getElementById('restartBtn').onclick = () => { if (!roomCode) return; socket.emit('readyToRestart', roomCode); resultText.textContent = t('restartWait'); resultText.style.color = '#ff8844'; resultIcon.textContent = '⏳'; };
 document.getElementById('menuBtn').onclick = () => { if (roomCode) socket.emit('backToMenu', roomCode); else showOnly('menu'); };
 
-// Ping
 let pingStart = 0;
 const pingInterval = setInterval(() => { if (socket.connected) { pingStart = Date.now(); socket.emit('ping'); } }, 2000);
 socket.on('pong', () => {
@@ -455,12 +662,10 @@ soundToggleBtn.onclick = () => { soundEnabled = !soundEnabled; soundToggleBtn.te
 vibrateToggleBtn.onclick = () => { vibrateEnabled = !vibrateEnabled; vibrateToggleBtn.textContent = vibrateEnabled ? '📳' : '📴'; if (!vibrateEnabled && navigator.vibrate) navigator.vibrate(0); };
 if (!('vibrate' in navigator) || !/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) { const vibBtn = document.getElementById('vibrateToggleBtn'); if (vibBtn) vibBtn.style.display = 'none'; }
 
-/* ══ KONTROLLER ══ */
 window.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); flap(); } });
 document.addEventListener('click', () => { if (gameRunning) flap(); });
 document.addEventListener('touchstart', e => { if (gameRunning) { e.preventDefault(); flap(); } }, { passive: false });
 
-/* ══ DİL DEĞİŞTİRME ══ */
 const langBtn = document.getElementById('langBtn');
 const langMenu = document.getElementById('langMenu');
 const langOptions = document.querySelectorAll('.lang-option');
@@ -489,21 +694,27 @@ function updateUILanguage() {
     document.querySelector('.divider span').textContent = t('or');
     document.querySelector('.label').textContent = t('roomCodeLabel');
     document.getElementById('startBtn').innerHTML = t('start');
-    // About modal etiketleri
-const aboutDev = document.getElementById('aboutDeveloper');
-if (aboutDev) aboutDev.textContent = t('developer');
-const aboutVfx = document.getElementById('aboutVfx');
-if (aboutVfx) aboutVfx.textContent = t('vfxArtist');
-const aboutVer = document.getElementById('aboutVersion');
-if (aboutVer) aboutVer.textContent = t('version');
-const aboutEng = document.getElementById('aboutEngine');
-if (aboutEng) aboutEng.textContent = t('engine');
-
-// About footer
-const madeWith = document.getElementById('aboutMadeWith');
-if (madeWith) madeWith.textContent = t('madeWith');
-const by = document.getElementById('aboutBy');
-if (by) by.textContent = t('by');
+const coinMsg = document.getElementById('coinChangeMsg');
+if (coinMsg) {
+    const amount = parseInt(coinMsg.textContent.match(/[-+]\d+/)?.[0] || '0');
+    coinMsg.textContent = amount >= 0 
+        ? `🪙 ${t('coinEarned')} +${amount} ${t('coins')}!`
+        : `🪙 ${t('coinLost')} ${amount} ${t('coins')}!`;
+    coinMsg.style.color = amount >= 0 ? '#ffcc00' : '#ff4444';
+}
+    const aboutDev = document.getElementById('aboutDeveloper'); if (aboutDev) aboutDev.textContent = t('developer');
+    const aboutVfx = document.getElementById('aboutVfx'); if (aboutVfx) aboutVfx.textContent = t('vfxArtist');
+    const aboutVer = document.getElementById('aboutVersion'); if (aboutVer) aboutVer.textContent = t('version');
+    const aboutEng = document.getElementById('aboutEngine'); if (aboutEng) aboutEng.textContent = t('engine');
+    const madeWith = document.getElementById('aboutMadeWith'); if (madeWith) madeWith.textContent = t('madeWith');
+    const by = document.getElementById('aboutBy'); if (by) by.textContent = t('by');
+    const mapTitle = document.getElementById('mapSelectTitle'); if (mapTitle) mapTitle.textContent = t('mapSelect');
+    const mapSpans = document.querySelectorAll('.map-option span');
+    if (mapSpans.length >= 3) {
+        mapSpans[0].textContent = t('mapClassic');
+        mapSpans[1].textContent = t('mapForest');
+        mapSpans[2].textContent = t('mapIce');
+    }
     document.querySelector('.hud-box.you .hud-label').textContent = t('you');
     document.querySelector('.hud-box.opp .hud-label').textContent = t('opponent');
     document.getElementById('restartBtn').textContent = t('restart');
@@ -518,24 +729,29 @@ if (by) by.textContent = t('by');
     else if (rt.includes('BERABERE') || rt.includes('DRAW') || rt.includes('UNENTSCHIEDEN')) resultText.textContent = t('draw');
     else if (rt.includes('Rakip bekleniyor') || rt.includes('Waiting for opponent') || rt.includes('Warte auf Gegner')) resultText.textContent = t('restartWait');
     else if (rt.includes('Rakip seninle') || rt.includes('Opponent wants') || rt.includes('Gegner möchte')) resultText.textContent = t('opponentWantsRestart');
-    const marketBtnEl = document.getElementById('marketBtn');
-if (marketBtnEl) marketBtnEl.innerHTML = t('market');
-    const marketTitle = document.getElementById('marketTitle');
-if (marketTitle) marketTitle.textContent = t('marketTitle');
+    const marketBtnEl = document.getElementById('marketBtn'); if (marketBtnEl) marketBtnEl.innerHTML = t('market');
+    const marketTitle = document.getElementById('marketTitle'); if (marketTitle) marketTitle.textContent = t('marketTitle');
     renderMarket();
 }
 
-/* ══ MARKET MODAL ══ */
 const marketModal = document.getElementById('marketModal');
 const marketBtn = document.getElementById('marketBtn');
 const marketClose = document.getElementById('marketClose');
 
-marketBtn.onclick = () => {
-    marketModal.classList.remove('hidden');
+function openMarket() {
+    marketModal.classList.remove('hidden', 'closing');
+    marketModal.classList.add('opening');
+    setTimeout(() => { marketModal.classList.remove('opening'); }, 350);
     renderMarket();
-};
-marketClose.onclick = () => marketModal.classList.add('hidden');
-marketModal.onclick = (e) => { if (e.target === marketModal) marketModal.classList.add('hidden'); };
+}
+function closeMarket() {
+    marketModal.classList.add('closing');
+    setTimeout(() => { marketModal.classList.add('hidden'); marketModal.classList.remove('closing'); }, 320);
+}
+marketBtn.onclick = openMarket;
+marketClose.onclick = closeMarket;
+marketModal.onclick = (e) => { if (e.target === marketModal) closeMarket(); };
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !marketModal.classList.contains('hidden')) { closeMarket(); } });
 
 function renderMarket() {
     const coinAmount = document.getElementById('coinAmount');
@@ -565,20 +781,9 @@ function renderMarket() {
         const btn = document.createElement('button');
         btn.className = 'btn';
         btn.style.cssText = 'padding:6px 14px;font-size:0.8rem;flex-shrink:0;';
-        if (isActive) {
-            btn.textContent = t('equipped'); btn.style.background = '#ffcc00'; btn.style.color = '#000';
-        } else if (isOwned) {
-            btn.textContent = t('use'); btn.className = 'btn btn-outline';
-            btn.onclick = () => { setActiveSkin(skin.id); renderMarket(); };
-        } else {
-            btn.textContent = `${t('buy')} - ${skin.price === 0 ? t('free') : '🪙' + skin.price}`;
-            btn.className = 'btn btn-primary';
-            btn.onclick = () => {
-                if (getCoins() < skin.price) { alert(t('notEnoughCoins')); return; }
-                spendCoins(skin.price); ownSkin(skin.id); setActiveSkin(skin.id);
-                alert(t('purchased')); renderMarket();
-            };
-        }
+        if (isActive) { btn.textContent = t('equipped'); btn.style.background = '#ffcc00'; btn.style.color = '#000'; }
+        else if (isOwned) { btn.textContent = t('use'); btn.className = 'btn btn-outline'; btn.onclick = () => { setActiveSkin(skin.id); renderMarket(); }; }
+        else { btn.textContent = `${t('buy')} - ${skin.price === 0 ? t('free') : '🪙' + skin.price}`; btn.className = 'btn btn-primary'; btn.onclick = () => { if (getCoins() < skin.price) { alert(t('notEnoughCoins')); return; } spendCoins(skin.price); ownSkin(skin.id); setActiveSkin(skin.id); alert(t('purchased')); renderMarket(); }; }
         div.appendChild(btn);
         skinList.appendChild(div);
     });
