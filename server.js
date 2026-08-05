@@ -21,27 +21,25 @@ function generatePipeSet(n = 20) {
 io.on('connection', socket => {
     console.log(`✅ Bağlandı: ${socket.id}`);
 
-    // ---------- PİNG PONG ----------
     socket.on('ping', () => {
         socket.emit('pong');
     });
 
-    /* ── Oda Oluştur ── */
-    socket.on('createRoom', () => {
+    socket.on('createRoom', (data) => {
         const code = Math.random().toString(36).substring(2, 8).toUpperCase();
         rooms[code] = {
             players:     [{ id: socket.id, score: 0, alive: true, ready: false, role: 'host' }],
             host:        socket.id,
             pipeSet:     generatePipeSet(),
             gameStarted: false,
-            gameOver:    false
+            gameOver:    false,
+            map:         data?.map || 'classic'
         };
         socket.join(code);
         socket.emit('roomCreated', { roomCode: code, isHost: true, role: 'host' });
-        console.log(`🏠 Oda: ${code}`);
+        console.log(`🏠 Oda: ${code} (Harita: ${rooms[code].map})`);
     });
 
-    /* ── Odaya Katıl ── */
     socket.on('joinRoom', code => {
         const room = rooms[code];
         if (!room)                  return socket.emit('error', '❌ Oda bulunamadı!');
@@ -50,12 +48,11 @@ io.on('connection', socket => {
 
         room.players.push({ id: socket.id, score: 0, alive: true, ready: false, role: 'guest' });
         socket.join(code);
-        socket.emit('roomJoined', { roomCode: code, pipeSet: room.pipeSet, role: 'guest' });
+        socket.emit('roomJoined', { roomCode: code, pipeSet: room.pipeSet, role: 'guest', map: room.map });
         io.to(room.host).emit('opponentJoined', { roomCode: code });
         console.log(`👤 ${socket.id} → ${code}`);
     });
 
-    /* ── Oyunu Başlat ── */
     socket.on('startGame', code => {
         const room = rooms[code];
         if (!room || room.host !== socket.id) return;
@@ -73,11 +70,10 @@ io.on('connection', socket => {
         });
         room.pipeSet = generatePipeSet();
 
-        io.to(code).emit('countdown', { seconds: 3, pipeSet: room.pipeSet });
+        io.to(code).emit('countdown', { seconds: 3, pipeSet: room.pipeSet, map: room.map });
         setTimeout(() => { if (rooms[code]) rooms[code].gameStarted = true; }, 3000);
     });
 
-    /* ── Kanat ve Flap Sayacı ── */
     socket.on('flap', code => {
         const room = rooms[code];
         if (room) {
@@ -87,7 +83,6 @@ io.on('connection', socket => {
         socket.to(code).emit('opponentFlapped');
     });
 
-    /* ── Skor ── */
     socket.on('scoreUpdate', code => {
         const room = rooms[code];
         if (!room) return;
@@ -98,7 +93,6 @@ io.on('connection', socket => {
         }
     });
 
-    /* ── Oyun Bitti ── */
     socket.on('gameOver', code => {
         const room = rooms[code];
         if (!room) return;
@@ -139,7 +133,6 @@ io.on('connection', socket => {
         }
     });
 
-    /* ── Tekrar Oyna ── */
     socket.on('readyToRestart', code => {
         const room = rooms[code];
         if (!room || !room.gameOver) return;
@@ -151,14 +144,13 @@ io.on('connection', socket => {
             room.pipeSet = generatePipeSet();
             room.players.forEach(p => { p.score = 0; p.alive = true; p.ready = false; });
             room.gameOver = false;
-            io.to(code).emit('countdown', { seconds: 3, pipeSet: room.pipeSet });
+            io.to(code).emit('countdown', { seconds: 3, pipeSet: room.pipeSet, map: room.map });
             setTimeout(() => { if (rooms[code]) rooms[code].gameStarted = true; }, 3000);
         } else {
             socket.to(code).emit('opponentReadyForRestart');
         }
     });
 
-    /* ── Ana Menü ── */
     socket.on('backToMenu', code => {
         const room = rooms[code];
         if (room) {
@@ -173,7 +165,6 @@ io.on('connection', socket => {
         socket.emit('menuRedirect');
     });
 
-    /* ── Disconnect ── */
     socket.on('disconnect', () => {
         console.log(`❌ Ayrıldı: ${socket.id}`);
         for (const code in rooms) {
