@@ -10,7 +10,6 @@
 </head>
 <body>
 
-    <!-- Arka plan partikülleri -->
     <div class="bg-particles">
         <span></span><span></span><span></span><span></span>
         <span></span><span></span><span></span><span></span>
@@ -18,12 +17,10 @@
 
     <div class="container">
 
-        <!-- Logo -->
         <div class="logo-wrap">
             <img src="art/Flappy_Duel.png" alt="Flappy Duel" class="logo">
         </div>
 
-        <!-- Ana Menü -->
         <div id="menu" class="card">
             <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
                 <button id="createBtn" class="btn btn-primary">
@@ -36,10 +33,26 @@
                 <input id="joinInput" type="text" placeholder="KOD GİR" maxlength="6" autocomplete="off">
                 <button id="joinBtn" class="btn btn-outline">Katıl</button>
             </div>
-            
         </div>
 
-        <!-- Bekleme -->
+        <div id="mapSelect" class="card hidden">
+            <p id="mapSelectTitle" style="text-align:center; font-weight:700; letter-spacing:2px; color:var(--muted); margin-bottom:20px;">HARİTA SEÇ</p>
+            <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+                <div class="map-option selected" data-map="classic" style="cursor:pointer; text-align:center; padding:16px; border:2px solid var(--border); border-radius:16px; background:rgba(255,255,255,0.02); transition:all 0.2s; flex:1; min-width:120px;">
+                    <div style="width:100%; height:80px; border-radius:10px; background:linear-gradient(180deg, #0a0303, #4a1010); margin-bottom:8px;"></div>
+                    <span style="font-weight:700; font-size:0.9rem;">🔥 Klasik</span>
+                </div>
+                <div class="map-option" data-map="forest" style="cursor:pointer; text-align:center; padding:16px; border:2px solid var(--border); border-radius:16px; background:rgba(255,255,255,0.02); transition:all 0.2s; flex:1; min-width:120px;">
+                    <div style="width:100%; height:80px; border-radius:10px; background:linear-gradient(180deg, #0a1a0a, #1a4a1a); margin-bottom:8px;"></div>
+                    <span style="font-weight:700; font-size:0.9rem;">🌲 Orman</span>
+                </div>
+                <div class="map-option" data-map="ice" style="cursor:pointer; text-align:center; padding:16px; border:2px solid var(--border); border-radius:16px; background:rgba(255,255,255,0.02); transition:all 0.2s; flex:1; min-width:120px;">
+                    <div style="width:100%; height:80px; border-radius:10px; background:linear-gradient(180deg, #0a1a2a, #1a4a6a); margin-bottom:8px;"></div>
+                    <span style="font-weight:700; font-size:0.9rem;">❄️ Buz</span>
+                </div>
+            </div>
+        </div>
+
         <div id="waiting" class="card hidden">
             <p class="label">ODA KODU</p>
             <div id="roomCodeDisplay" class="room-code">------</div>
@@ -48,7 +61,6 @@
             <button id="startBtn" class="btn btn-primary hidden">▶ BAŞLAT</button>
         </div>
 
-        <!-- Oyun -->
         <div id="game" class="card hidden">
             <div class="hud">
                 <div class="hud-box you">
@@ -66,7 +78,6 @@
             </div>
         </div>
 
-        <!-- Oyun Sonu -->
         <div id="gameOver" class="card hidden">
             <div id="resultIcon" class="result-icon">🏆</div>
             <h2 id="resultText" class="result-text">OYUN BİTTİ</h2>
@@ -102,7 +113,6 @@
             </div>
         </div>
 
-        <!-- Ping Göstergesi -->
         <div id="statusBar">
             <div id="pingDisplay" class="ping-indicator">
                 <span id="pingIcon">📶</span>
@@ -110,7 +120,6 @@
             </div>
         </div>
 
-        <!-- Hakkında Modal -->
         <div id="aboutModal" class="modal hidden">
             <div class="modal-box">
                 <div class="modal-title-bar">
@@ -121,7 +130,7 @@
                 <div class="modal-divider"></div>
                 <div class="modal-hero">
                     <img src="art/Flappy_Duel.png" alt="Flappy Duel" class="modal-logo">
-                    <div class="modal-version-badge">BETA v1.3</div>
+                    <div class="modal-version-badge">BETA v1.4</div>
                 </div>
                 <div class="modal-divider"></div>
                 <p class="modal-desc">
@@ -129,34 +138,33 @@
                     Boruları geç, rakibinden daha çok skor yap.
                 </p>
                 <div class="modal-rows">
-    <div class="modal-row">
-        <span class="modal-row-label" id="aboutDeveloper">DEVELOPER</span>
-        <span class="modal-row-value">Wrenchiz</span>
-    </div>
-    <div class="modal-row">
-        <span class="modal-row-label" id="aboutVfx">VFX ARTIST</span>
-        <span class="modal-row-value">Godly</span>
-    </div>
-    <div class="modal-row">
-        <span class="modal-row-label" id="aboutVersion">VERSION</span>
-        <span class="modal-row-value">Beta v1.3</span>
-    </div>
-    <div class="modal-row">
-        <span class="modal-row-label" id="aboutEngine">ENGINE</span>
-        <span class="modal-row-value">HTML5 Canvas + Socket.io</span>
-    </div>
-</div>
-<div class="modal-divider"></div>
-<div class="modal-footer">
-    <span id="aboutMadeWith">MADE WITH</span> <span class="heart">❤</span> <span id="aboutBy">BY</span>
-    <a href="https://phantomware.netlify.app/" target="_blank" rel="noopener noreferrer">
-        <img src="art/Phantomware_TP_Logo_2.png" alt="Phantomware" class="modal-company-logo">
-    </a>
-</div>
+                    <div class="modal-row">
+                        <span class="modal-row-label" id="aboutDeveloper">DEVELOPER</span>
+                        <span class="modal-row-value">Wrenchiz</span>
+                    </div>
+                    <div class="modal-row">
+                        <span class="modal-row-label" id="aboutVfx">VFX ARTIST</span>
+                        <span class="modal-row-value">Godly</span>
+                    </div>
+                    <div class="modal-row">
+                        <span class="modal-row-label" id="aboutVersion">VERSION</span>
+                        <span class="modal-row-value">Beta v1.4</span>
+                    </div>
+                    <div class="modal-row">
+                        <span class="modal-row-label" id="aboutEngine">ENGINE</span>
+                        <span class="modal-row-value">HTML5 Canvas + Socket.io</span>
+                    </div>
+                </div>
+                <div class="modal-divider"></div>
+                <div class="modal-footer">
+                    <span id="aboutMadeWith">MADE WITH</span> <span class="heart">❤</span> <span id="aboutBy">BY</span>
+                    <a href="https://phantomware.netlify.app/" target="_blank" rel="noopener noreferrer">
+                        <img src="art/Phantomware_TP_Logo_2.png" alt="Phantomware" class="modal-company-logo">
+                    </a>
+                </div>
             </div>
         </div>
 
-        <!-- Market Modal -->
         <div id="marketModal" class="modal hidden">
             <div class="modal-box">
                 <div class="modal-title-bar">
@@ -170,13 +178,12 @@
                         🪙 <span id="coinAmount">0</span> <span style="font-size:1rem;color:var(--muted);">Coins</span>
                     </div>
                     <div style="max-height: 400px; overflow-y: auto; padding-right: 8px; scrollbar-width: thin; scrollbar-color: #a00 #1a0a0a;">
-    <div id="skinList" style="display:flex; flex-direction:column; gap:12px;"></div>
-</div>
+                        <div id="skinList" style="display:flex; flex-direction:column; gap:12px;"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Alt Sağ Panel -->
         <div id="bottomRightPanel">
             <div id="controlPanel">
                 <button id="soundToggleBtn" class="control-btn">🔊</button>
@@ -185,9 +192,9 @@
             <div id="langContainer" style="position:relative;">
                 <button id="langBtn" class="control-btn" title="Language">🌐</button>
                 <div id="langMenu" class="lang-menu hidden">
-                    <div data-lang="en" class="lang-option selected">English</div>
-                    <div data-lang="tr" class="lang-option">Türkçe</div>
-                    <div data-lang="de" class="lang-option">Deutsch</div>
+                    <div data-lang="en" class="lang-option selected">🇬🇧 English</div>
+                    <div data-lang="tr" class="lang-option">🇹🇷 Türkçe</div>
+                    <div data-lang="de" class="lang-option">🇩🇪 Deutsch</div>
                 </div>
             </div>
             <button id="aboutBtn" class="about-fab">?</button>
