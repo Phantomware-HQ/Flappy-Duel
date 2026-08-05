@@ -7,7 +7,7 @@ Made With ❤️ by **Phantomware**
 > **Engine:** HTML5 Canvas + Socket.io  
 > **Live Open Beta:** [https://flappy-duel.onrender.com/](https://flappy-duel.onrender.com/)
 
-<img src="art/Mobile_Supported.png" width="100" alt="MobileSupported">
+<img src="art/Mobile_Supported.png" width="300" alt="MobileSupported">
 
 ---
 
