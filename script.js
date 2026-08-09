@@ -361,20 +361,7 @@ startBtn.onclick = () => { if (roomCode) socket.emit('startGame', roomCode); };
 document.getElementById('restartBtn').onclick = () => { if (!roomCode) return; socket.emit('readyToRestart', roomCode); resultText.textContent = t('restartWait'); resultText.style.color = '#ff8844'; resultIcon.textContent = '⏳'; };
 document.getElementById('menuBtn').onclick = () => { if (roomCode) socket.emit('backToMenu', roomCode); else showOnly('menu'); };
 
-// Reset butonu
-const resetUserBtn = document.getElementById('resetUserBtn');
-resetUserBtn.onclick = () => {
-    if (confirm(t('resetConfirm'))) {
-        localStorage.removeItem('fd_username');
-        localStorage.removeItem('fd_remoteStats');
-remoteStats = {};
-        document.cookie = 'fd_username=; max-age=0; path=/';
-        userBadge.style.display = 'none';
-        nameModal.style.display = 'flex';
-        usernameInput.value = '';
-        usernameInput.focus();
-    }
-};
+
 
 // Scoreboard (localStorage tabanlı)
 const leaderboardModal = document.getElementById('leaderboardModal');
