@@ -34,43 +34,36 @@ io.on('connection', socket => {
         socket.emit('pong');
     });
 
-socket.on('setUsername', (username) => {
-    // Bu kullanıcı adıyla daha önce kayıt var mı kontrol et
-    let existingId = null;
-    for (const [id, data] of Object.entries(leaderboard)) {
-        if (data.name === username) {
-            existingId = id;
-            break;
+    socket.on('setUsername', (username) => {
+        // Bu isim AKTİF olarak başkası tarafından kullanılıyor mu?
+        for (const [id, data] of Object.entries(leaderboard)) {
+            if (data.name === username && id !== socket.id) {
+                const existingSocket = io.sockets.sockets.get(id);
+                if (existingSocket && existingSocket.connected) {
+                    socket.emit('usernameTaken', username);
+                    return;
+                }
+            }
         }
-    }
-    
-    if (existingId) {
-        if (existingId === socket.id) {
-            // Kendi ID'si ile aynı, sadece isim güncelle
+
+        // Disconnect olmuş aynı isimli eski kayıtları temizle
+        for (const [id, data] of Object.entries(leaderboard)) {
+            if (data.name === username && id !== socket.id) {
+                delete leaderboard[id];
+            }
+        }
+
+        // Şimdi mevcut durumu kontrol et
+        if (leaderboard[socket.id]) {
+            // Mevcut ID var, sadece isim güncelle
             leaderboard[socket.id].name = username;
         } else {
-            // Başkasının ID'si, isim çalınmış olmasın?
-            // Eğer existingId'ye sahip kullanıcı hala bağlıysa (aktif socket), engelle
-            const existingSocket = io.sockets.sockets.get(existingId);
-            if (existingSocket) {
-                socket.emit('usernameTaken', username);
-                return;
-            }
-            // Bağlı değilse (disconnect olmuş), eski kaydı yeni ID'ye taşı
-            leaderboard[socket.id] = leaderboard[existingId];
-            leaderboard[socket.id].name = username;
-            delete leaderboard[existingId];
+            // Yeni kayıt
+            leaderboard[socket.id] = { name: username, wins: 0, losses: 0, coins: 0 };
         }
-    } else if (!leaderboard[socket.id]) {
-        // Tamamen yeni kullanıcı
-        leaderboard[socket.id] = { name: username, wins: 0, losses: 0, coins: 0 };
-    } else {
-        // Mevcut ID'ye sahip, sadece isim güncelle
-        leaderboard[socket.id].name = username;
-    }
-    
-    io.emit('leaderboardUpdate', getLeaderboard());
-});
+
+        io.emit('leaderboardUpdate', getLeaderboard());
+    });
 
     // İstatistik güncelle
     socket.on('updateStats', (data) => {
@@ -229,11 +222,11 @@ socket.on('setUsername', (username) => {
         socket.emit('menuRedirect');
     });
 
-// Kendini leaderboard'dan sil
-socket.on('resetMyStats', () => {
-    delete leaderboard[socket.id];
-    io.emit('leaderboardUpdate', getLeaderboard());
-});
+    // Kendini leaderboard'dan sil
+    socket.on('resetMyStats', () => {
+        delete leaderboard[socket.id];
+        io.emit('leaderboardUpdate', getLeaderboard());
+    });
 
     // Disconnect
     socket.on('disconnect', () => {
