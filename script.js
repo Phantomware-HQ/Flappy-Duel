@@ -366,7 +366,8 @@ const resetUserBtn = document.getElementById('resetUserBtn');
 resetUserBtn.onclick = () => {
     if (confirm(t('resetConfirm'))) {
         localStorage.removeItem('fd_username');
-        localStorage.removeItem('fd_stats');
+        localStorage.removeItem('fd_remoteStats');
+remoteStats = {};
         document.cookie = 'fd_username=; max-age=0; path=/';
         userBadge.style.display = 'none';
         nameModal.style.display = 'flex';
@@ -380,7 +381,18 @@ const leaderboardModal = document.getElementById('leaderboardModal');
 const leaderboardBtn = document.getElementById('leaderboardBtn');
 const leaderboardClose = document.getElementById('leaderboardClose');
 const leaderboardList = document.getElementById('leaderboardList');
-const remoteStats = {};
+// remoteStats'u localStorage'dan yükle
+let remoteStats = {};
+try {
+    const saved = localStorage.getItem('fd_remoteStats');
+    if (saved) remoteStats = JSON.parse(saved);
+} catch(e) {
+    remoteStats = {};
+}
+
+function saveRemoteStats() {
+    localStorage.setItem('fd_remoteStats', JSON.stringify(remoteStats));
+}
 
 function openLeaderboard() {
     leaderboardModal.classList.remove('hidden', 'closing');
@@ -400,6 +412,7 @@ window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !leaderboa
 
 socket.on('playerStats', (data) => {
     remoteStats[data.name] = { wins: data.wins, losses: data.losses };
+    saveRemoteStats(); // localStorage'a kaydet
     renderLocalLeaderboard();
 });
 
