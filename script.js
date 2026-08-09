@@ -3,45 +3,6 @@ const socket = io();
 let selectedMap = 'classic';
 let myRole = null;
 
-// Kullanıcı adı kontrolü - önce localStorage, yoksa cookie
-let username = localStorage.getItem('fd_username');
-if (!username) {
-    const cookieMatch = document.cookie.match(/fd_username=([^;]+)/);
-    if (cookieMatch) {
-        username = decodeURIComponent(cookieMatch[1]);
-        localStorage.setItem('fd_username', username);
-    }
-}
-
-const userBadge = document.getElementById('userBadge');
-const userBadgeName = document.getElementById('userBadgeName');
-const nameModal = document.getElementById('nameModal');
-const usernameInput = document.getElementById('usernameInput');
-const saveNameBtn = document.getElementById('saveNameBtn');
-
-if (!username) {
-    nameModal.style.display = 'flex';
-    usernameInput.focus();
-} else {
-    nameModal.style.display = 'none';
-    userBadge.style.display = 'flex';
-    userBadgeName.textContent = username;
-}
-
-saveNameBtn.onclick = () => {
-    const name = usernameInput.value.trim();
-    if (name.length < 2) return alert(t('nameTooShort'));
-    if (name.length > 16) return alert(t('nameTooLong'));
-    localStorage.setItem('fd_username', name);
-    document.cookie = `fd_username=${encodeURIComponent(name)};max-age=2592000;path=/`;
-    nameModal.style.display = 'none';
-    userBadge.style.display = 'flex';
-    userBadgeName.textContent = name;
-};
-
-usernameInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') saveNameBtn.click();
-});
 
 // localStorage Skor Yönetimi
 function getStats() {
@@ -361,92 +322,6 @@ startBtn.onclick = () => { if (roomCode) socket.emit('startGame', roomCode); };
 document.getElementById('restartBtn').onclick = () => { if (!roomCode) return; socket.emit('readyToRestart', roomCode); resultText.textContent = t('restartWait'); resultText.style.color = '#ff8844'; resultIcon.textContent = '⏳'; };
 document.getElementById('menuBtn').onclick = () => { if (roomCode) socket.emit('backToMenu', roomCode); else showOnly('menu'); };
 
-
-
-// Scoreboard (localStorage tabanlı)
-const leaderboardModal = document.getElementById('leaderboardModal');
-const leaderboardBtn = document.getElementById('leaderboardBtn');
-const leaderboardClose = document.getElementById('leaderboardClose');
-const leaderboardList = document.getElementById('leaderboardList');
-// remoteStats'u localStorage'dan yükle
-let remoteStats = {};
-try {
-    const saved = localStorage.getItem('fd_remoteStats');
-    if (saved) remoteStats = JSON.parse(saved);
-} catch(e) {
-    remoteStats = {};
-}
-
-function saveRemoteStats() {
-    localStorage.setItem('fd_remoteStats', JSON.stringify(remoteStats));
-}
-
-function openLeaderboard() {
-    leaderboardModal.classList.remove('hidden', 'closing');
-    leaderboardModal.classList.add('opening');
-    setTimeout(() => { leaderboardModal.classList.remove('opening'); }, 350);
-    socket.emit('requestAllStats');
-    renderLocalLeaderboard();
-}
-function closeLeaderboard() {
-    leaderboardModal.classList.add('closing');
-    setTimeout(() => { leaderboardModal.classList.add('hidden'); leaderboardModal.classList.remove('closing'); }, 320);
-}
-leaderboardBtn.onclick = openLeaderboard;
-leaderboardClose.onclick = closeLeaderboard;
-leaderboardModal.onclick = (e) => { if (e.target === leaderboardModal) closeLeaderboard(); };
-window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !leaderboardModal.classList.contains('hidden')) closeLeaderboard(); });
-
-socket.on('playerStats', (data) => {
-    remoteStats[data.name] = { wins: data.wins, losses: data.losses };
-    saveRemoteStats(); // localStorage'a kaydet
-    renderLocalLeaderboard();
-});
-
-socket.on('requestStatsReply', () => {
-    const myStats = getStats();
-    const myName = localStorage.getItem('fd_username') || 'Unknown';
-    socket.emit('shareStats', { name: myName, wins: myStats.wins, losses: myStats.losses });
-});
-
-function renderLocalLeaderboard() {
-    if (!leaderboardList) return;
-    leaderboardList.innerHTML = '';
-    
-    const myName = localStorage.getItem('fd_username') || 'Unknown';
-    const myStats = getStats();
-    const allPlayers = [{ name: myName, wins: myStats.wins, losses: myStats.losses }];
-    
-    for (const [name, stats] of Object.entries(remoteStats)) {
-        if (name !== myName) {
-            allPlayers.push({ name, wins: stats.wins, losses: stats.losses });
-        }
-    }
-    
-    allPlayers.sort((a, b) => b.wins - a.wins);
-    
-    if (allPlayers.length === 0) {
-        leaderboardList.innerHTML = `<div style="text-align:center; color:var(--muted); padding:20px;">${t('noPlayers')}</div>`;
-        return;
-    }
-    
-    const header = document.createElement('div');
-    header.style.cssText = 'display:flex; padding:10px 16px; font-weight:700; font-size:0.75rem; letter-spacing:1px; color:var(--muted); border-bottom:1px solid var(--border);';
-    header.innerHTML = `<span style="width:40px;">#</span><span style="flex:1;">${t('lbName')}</span><span style="width:60px;text-align:center;">🏆</span><span style="width:60px;text-align:center;">💀</span>`;
-    leaderboardList.appendChild(header);
-    
-    allPlayers.forEach((player, index) => {
-        const row = document.createElement('div');
-        row.style.cssText = 'display:flex; padding:10px 16px; align-items:center; border-bottom:1px solid rgba(255,255,255,0.03); font-size:0.9rem;';
-        if (player.name === myName) row.style.background = 'rgba(255,100,0,0.1)';
-        const rank = index + 1;
-        const rankIcon = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
-        row.innerHTML = `<span style="width:40px; font-weight:700;">${rankIcon}</span><span style="flex:1; font-weight:600;">${escapeHTML(player.name)}</span><span style="width:60px; text-align:center; color:#3ddc84;">${player.wins}</span><span style="width:60px; text-align:center; color:#ff4444;">${player.losses}</span>`;
-        leaderboardList.appendChild(row);
-    });
-}
-
-function escapeHTML(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
 // Ping
 let pingStart = 0; const pingInterval = setInterval(() => { if (socket.connected) { pingStart = Date.now(); socket.emit('ping'); } }, 2000);
