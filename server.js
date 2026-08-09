@@ -7,28 +7,8 @@ const app    = express();
 const server = http.createServer(app);
 const io     = new Server(server);
 
-let globalLeaderboard = {};
-const usedNames = new Set();
-
-
-
 app.use(express.static(__dirname));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-
-// Server.js - En başa, io.on('connection')'dan ÖNCE ekle
-// 🔥 SIFIRLAMA KODU - BUNU EKLE
-app.get('/reset', (req, res) => {
-    // Leaderboard verilerini sıfırla
-    if (globalLeaderboard) {
-        for (let key in globalLeaderboard) {
-            delete globalLeaderboard[key];
-        }
-    }
-    if (usedNames) {
-        usedNames.clear();
-    }
-    res.send('✅ LEADERBOARD SIFIRLANDI!');
-});
 
 const rooms = {};
 
@@ -46,19 +26,7 @@ io.on('connection', socket => {
         socket.emit('pong');
     });
 
-    // Oyuncu kendi skorunu paylaştı
-    socket.on('shareStats', (data) => {
-        socket.broadcast.emit('playerStats', { 
-            name: data.name, 
-            wins: data.wins, 
-            losses: data.losses 
-        });
-    });
 
-    // Leaderboard açıldı, herkesten veri iste
-    socket.on('requestAllStats', () => {
-        socket.broadcast.emit('requestStatsReply');
-    });
 
     // Oda Oluştur
     socket.on('createRoom', (data) => {
