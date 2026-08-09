@@ -17,6 +17,27 @@
 
     <div class="container">
 
+        <!-- Kullanıcı Adı Rozeti -->
+        <div id="userBadge">
+            <span>👤</span>
+            <span id="userBadgeName"></span>
+        </div>
+
+        <!-- İsim Giriş Modalı -->
+        <div id="nameModal" class="modal">
+            <div class="modal-box" style="max-width: 380px;">
+                <div class="modal-title-bar">
+                    <span class="modal-icon">👤</span>
+                    <span class="modal-title" id="nameModalTitle">ENTER NAME</span>
+                </div>
+                <div class="modal-divider"></div>
+                <div class="modal-body" style="text-align:center; padding: 24px;">
+                    <input id="usernameInput" type="text" placeholder="İsim" maxlength="16" autocomplete="off" style="width:100%; margin-bottom:16px;">
+                    <button id="saveNameBtn" class="btn btn-primary" style="width:100%;">Kaydet</button>
+                </div>
+            </div>
+        </div>
+
         <div class="logo-wrap">
             <img src="art/Flappy_Duel.png" alt="Flappy Duel" class="logo">
         </div>
@@ -38,7 +59,7 @@
         <div id="mapSelect" class="card hidden">
             <p id="mapSelectTitle" style="text-align:center; font-weight:700; letter-spacing:2px; color:var(--muted); margin-bottom:20px;">HARİTA SEÇ</p>
             <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
-                <div class="map-option selected" data-map="classic" style="cursor:pointer; text-align:center; padding:16px; border:2px solid var(--border); border-radius:16px; background:rgba(255,255,255,0.02); transition:all 0.2s; flex:1; min-width:120px;">
+                <div class="map-option" data-map="classic" style="cursor:pointer; text-align:center; padding:16px; border:2px solid var(--border); border-radius:16px; background:rgba(255,255,255,0.02); transition:all 0.2s; flex:1; min-width:120px;">
                     <div style="width:100%; height:80px; border-radius:10px; background:linear-gradient(180deg, #0a0303, #4a1010); margin-bottom:8px;"></div>
                     <span style="font-weight:700; font-size:0.9rem;">🔥 Klasik</span>
                 </div>
@@ -130,7 +151,7 @@
                 <div class="modal-divider"></div>
                 <div class="modal-hero">
                     <img src="art/Flappy_Duel.png" alt="Flappy Duel" class="modal-logo">
-                    <div class="modal-version-badge">BETA v1.4</div>
+                    <div class="modal-version-badge">BETA v1.5</div>
                 </div>
                 <div class="modal-divider"></div>
                 <p class="modal-desc">
@@ -148,7 +169,7 @@
                     </div>
                     <div class="modal-row">
                         <span class="modal-row-label" id="aboutVersion">VERSION</span>
-                        <span class="modal-row-value">Beta v1.4</span>
+                        <span class="modal-row-value">Beta v1.5</span>
                     </div>
                     <div class="modal-row">
                         <span class="modal-row-label" id="aboutEngine">ENGINE</span>
@@ -184,6 +205,21 @@
             </div>
         </div>
 
+        <!-- Scoreboard Modal -->
+        <div id="leaderboardModal" class="modal hidden">
+            <div class="modal-box" style="max-width: 500px;">
+                <div class="modal-title-bar">
+                    <span class="modal-icon">🏆</span>
+                    <span class="modal-title" id="leaderboardTitle">LEADERBOARD</span>
+                    <button class="modal-close" id="leaderboardClose">✕</button>
+                </div>
+                <div class="modal-divider"></div>
+                <div class="modal-body">
+                    <div id="leaderboardList" style="max-height: 400px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+
         <div id="bottomRightPanel">
             <div id="controlPanel">
                 <button id="soundToggleBtn" class="control-btn">🔊</button>
@@ -197,6 +233,7 @@
                     <div data-lang="de" class="lang-option">🇩🇪 Deutsch</div>
                 </div>
             </div>
+            <button id="leaderboardBtn" class="about-fab" title="Scoreboard">🏆</button>
             <button id="aboutBtn" class="about-fab">?</button>
         </div>
 
