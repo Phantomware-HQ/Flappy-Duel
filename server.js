@@ -35,17 +35,28 @@ io.on('connection', socket => {
     });
 
     socket.on('setUsername', (username) => {
-    // Eski kayıtları temizle (disconnect olmuş aynı isimlileri sil)
+    // Bu isimde eski bir kayıt var mı? (kendine ait olabilir)
+    let existingData = null;
+    let existingId = null;
+    
     for (const [id, data] of Object.entries(leaderboard)) {
         if (data.name === username && id !== socket.id) {
-            delete leaderboard[id];
+            existingData = data;
+            existingId = id;
+            break;
         }
     }
     
-    // Kaydı oluştur veya güncelle
-    if (!leaderboard[socket.id]) {
+    if (existingData) {
+        // Eski veriyi yeni ID'ye taşı
+        leaderboard[socket.id] = existingData;
+        leaderboard[socket.id].name = username;
+        delete leaderboard[existingId];
+    } else if (!leaderboard[socket.id]) {
+        // Tamamen yeni kullanıcı
         leaderboard[socket.id] = { name: username, wins: 0, losses: 0, coins: 0 };
     } else {
+        // Mevcut ID var, sadece isim güncelle
         leaderboard[socket.id].name = username;
     }
     
