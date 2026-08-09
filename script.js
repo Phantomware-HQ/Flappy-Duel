@@ -4,21 +4,6 @@ let selectedMap = 'classic';
 let myRole = null;
 
 
-// localStorage Skor Yönetimi
-function getStats() {
-    try { return JSON.parse(localStorage.getItem('fd_stats')) || { wins: 0, losses: 0 }; }
-    catch(e) { return { wins: 0, losses: 0 }; }
-}
-
-function updateMyStats(result) {
-    const stats = getStats();
-    if (result === 'win') stats.wins++;
-    if (result === 'loss') stats.losses++;
-    localStorage.setItem('fd_stats', JSON.stringify(stats));
-    const name = localStorage.getItem('fd_username') || 'Unknown';
-    socket.emit('shareStats', { name, wins: stats.wins, losses: stats.losses });
-}
-
 // Market ve Envanter
 const SKINS = {
   default: { id: 'default', name: 'Classic Black', nameTr: 'Klasik Siyah', nameDe: 'Klassik Schwarz', price: 0, color1: '#222222', color2: '#050505', desc: 'Default skin', descTr: 'Varsayılan kostüm', descDe: 'Standard-Skin' },
@@ -300,9 +285,9 @@ socket.on('gameEnded', d => {
     gameRunning = false; dying = false; cancelAnimationFrame(raf); particles = []; flashAlpha = 0;
     showStats(d); showOnly('gameOver');
     let coinChange = 0;
-    if (d.winner === socket.id) { resultIcon.textContent = '🏆'; resultText.textContent = t('victory'); resultText.style.color = '#3ddc84'; gameOverScreen.style.background = '#0a1a0a'; gameOverScreen.style.borderColor = 'rgba(0,180,0,0.5)'; gameOverScreen.style.boxShadow = '0 0 40px rgba(0,180,0,0.3), 0 8px 40px rgba(0,0,0,0.7)'; addCoins(2); coinChange = 2; updateMyStats('win'); }
-    else if (d.winner === 'draw') { resultIcon.textContent = '🤝'; resultText.textContent = t('draw'); resultText.style.color = '#ffaa00'; gameOverScreen.style.background = '#1a0f00'; gameOverScreen.style.borderColor = 'rgba(255,136,0,0.5)'; gameOverScreen.style.boxShadow = '0 0 40px rgba(255,136,0,0.3), 0 8px 40px rgba(0,0,0,0.7)'; addCoins(1); coinChange = 1; updateMyStats('draw'); }
-    else { resultIcon.textContent = '💀'; resultText.textContent = t('defeat'); resultText.style.color = '#ff4444'; gameOverScreen.style.background = '#1a0a0a'; gameOverScreen.style.borderColor = 'rgba(200,20,20,0.5)'; gameOverScreen.style.boxShadow = '0 0 40px rgba(200,20,20,0.3), 0 8px 40px rgba(0,0,0,0.7)'; spendCoins(1); coinChange = -1; updateMyStats('loss'); }
+    if (d.winner === socket.id) { resultIcon.textContent = '🏆'; resultText.textContent = t('victory'); resultText.style.color = '#3ddc84'; gameOverScreen.style.background = '#0a1a0a'; gameOverScreen.style.borderColor = 'rgba(0,180,0,0.5)'; gameOverScreen.style.boxShadow = '0 0 40px rgba(0,180,0,0.3), 0 8px 40px rgba(0,0,0,0.7)'; addCoins(2); coinChange = 2; }
+    else if (d.winner === 'draw') { resultIcon.textContent = '🤝'; resultText.textContent = t('draw'); resultText.style.color = '#ffaa00'; gameOverScreen.style.background = '#1a0f00'; gameOverScreen.style.borderColor = 'rgba(255,136,0,0.5)'; gameOverScreen.style.boxShadow = '0 0 40px rgba(255,136,0,0.3), 0 8px 40px rgba(0,0,0,0.7)'; addCoins(1); coinChange = 1; }
+    else { resultIcon.textContent = '💀'; resultText.textContent = t('defeat'); resultText.style.color = '#ff4444'; gameOverScreen.style.background = '#1a0a0a'; gameOverScreen.style.borderColor = 'rgba(200,20,20,0.5)'; gameOverScreen.style.boxShadow = '0 0 40px rgba(200,20,20,0.3), 0 8px 40px rgba(0,0,0,0.7)'; spendCoins(1); coinChange = -1;}
     showCoinChange(coinChange);
 });
 socket.on('opponentReadyForRestart', () => { if (!gameOverScreen.classList.contains('hidden')) { resultText.textContent = t('opponentWantsRestart'); resultText.style.color = '#ff8844'; resultIcon.textContent = '🔄'; } statusText.textContent = t('opponentReadyRestart'); });
