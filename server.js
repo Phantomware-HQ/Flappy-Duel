@@ -188,34 +188,6 @@ io.on('connection', socket => {
         socket.emit('menuRedirect');
     });
 
-    // İsim kontrolü
-const usedNames = new Set();
-
-socket.on('checkUsername', (name, callback) => {
-    // Kendi ismini kontrol etme (eğer zaten kayıtlıysa)
-    const currentUser = socket.username;
-    if (currentUser === name) {
-        callback({ available: true });
-        return;
-    }
-    
-    // İsim kullanılıyor mu?
-    const isAvailable = !usedNames.has(name);
-    callback({ available: isAvailable });
-});
-
-// İsim kaydet
-socket.on('registerUsername', (name) => {
-    // Eski ismi sil
-    if (socket.username) {
-        usedNames.delete(socket.username);
-    }
-    // Yeni ismi ekle
-    socket.username = name;
-    usedNames.add(name);
-    console.log(`📝 ${socket.id} -> ${name}`);
-});
-
     // Disconnect
     socket.on('disconnect', () => {
         console.log(`❌ Ayrıldı: ${socket.id}`);
