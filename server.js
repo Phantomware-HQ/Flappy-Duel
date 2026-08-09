@@ -11,6 +11,7 @@ app.use(express.static(__dirname));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 const rooms = {};
+const leaderboard = {};
 
 function generatePipeSet(n = 20) {
     return Array.from({ length: n }, () => ({
@@ -18,13 +19,41 @@ function generatePipeSet(n = 20) {
     }));
 }
 
+function getLeaderboard() {
+    return Object.entries(leaderboard)
+        .map(([id, data]) => ({ id, ...data }))
+        .sort((a, b) => b.wins - a.wins)
+        .slice(0, 50);
+}
+
 io.on('connection', socket => {
     console.log(`✅ Bağlandı: ${socket.id}`);
 
+    // Ping
     socket.on('ping', () => {
         socket.emit('pong');
     });
 
+    // Kullanıcı adı
+    socket.on('setUsername', (username) => {
+        if (!leaderboard[socket.id]) {
+            leaderboard[socket.id] = { name: username, wins: 0, losses: 0, coins: 0 };
+        } else {
+            leaderboard[socket.id].name = username;
+        }
+        io.emit('leaderboardUpdate', getLeaderboard());
+    });
+
+    // İstatistik güncelle
+    socket.on('updateStats', (data) => {
+        if (!leaderboard[socket.id]) return;
+        if (data.result === 'win') leaderboard[socket.id].wins++;
+        if (data.result === 'loss') leaderboard[socket.id].losses++;
+        leaderboard[socket.id].coins = data.coins;
+        io.emit('leaderboardUpdate', getLeaderboard());
+    });
+
+    // Oda Oluştur
     socket.on('createRoom', (data) => {
         const code = Math.random().toString(36).substring(2, 8).toUpperCase();
         rooms[code] = {
@@ -40,6 +69,7 @@ io.on('connection', socket => {
         console.log(`🏠 Oda: ${code} (Harita: ${rooms[code].map})`);
     });
 
+    // Odaya Katıl
     socket.on('joinRoom', code => {
         const room = rooms[code];
         if (!room)                  return socket.emit('error', '❌ Oda bulunamadı!');
@@ -53,6 +83,7 @@ io.on('connection', socket => {
         console.log(`👤 ${socket.id} → ${code}`);
     });
 
+    // Oyunu Başlat
     socket.on('startGame', code => {
         const room = rooms[code];
         if (!room || room.host !== socket.id) return;
@@ -74,6 +105,7 @@ io.on('connection', socket => {
         setTimeout(() => { if (rooms[code]) rooms[code].gameStarted = true; }, 3000);
     });
 
+    // Kanat
     socket.on('flap', code => {
         const room = rooms[code];
         if (room) {
@@ -83,6 +115,7 @@ io.on('connection', socket => {
         socket.to(code).emit('opponentFlapped');
     });
 
+    // Skor
     socket.on('scoreUpdate', code => {
         const room = rooms[code];
         if (!room) return;
@@ -93,6 +126,7 @@ io.on('connection', socket => {
         }
     });
 
+    // Oyun Bitti
     socket.on('gameOver', code => {
         const room = rooms[code];
         if (!room) return;
@@ -133,6 +167,7 @@ io.on('connection', socket => {
         }
     });
 
+    // Tekrar Oyna
     socket.on('readyToRestart', code => {
         const room = rooms[code];
         if (!room || !room.gameOver) return;
@@ -151,6 +186,7 @@ io.on('connection', socket => {
         }
     });
 
+    // Ana Menü
     socket.on('backToMenu', code => {
         const room = rooms[code];
         if (room) {
@@ -165,6 +201,7 @@ io.on('connection', socket => {
         socket.emit('menuRedirect');
     });
 
+    // Disconnect
     socket.on('disconnect', () => {
         console.log(`❌ Ayrıldı: ${socket.id}`);
         for (const code in rooms) {
