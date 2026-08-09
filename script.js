@@ -6,11 +6,10 @@ let myRole = null;
 // Kullanıcı adı kontrolü - önce localStorage, yoksa cookie
 let username = localStorage.getItem('fd_username');
 if (!username) {
-    // Cookie'den oku
     const cookieMatch = document.cookie.match(/fd_username=([^;]+)/);
     if (cookieMatch) {
         username = decodeURIComponent(cookieMatch[1]);
-        localStorage.setItem('fd_username', username); // localStorage'a da geri yaz
+        localStorage.setItem('fd_username', username);
     }
 }
 
@@ -21,33 +20,43 @@ const usernameInput = document.getElementById('usernameInput');
 const saveNameBtn = document.getElementById('saveNameBtn');
 
 if (!username) {
-    nameModal.style.display = 'flex'; // modal'ı göster
+    nameModal.style.display = 'flex';
     usernameInput.focus();
 } else {
-    nameModal.style.display = 'none'; // modal'ı gizle
+    nameModal.style.display = 'none';
     userBadge.style.display = 'flex';
     userBadgeName.textContent = username;
-    socket.emit('setUsername', username);
 }
 
 saveNameBtn.onclick = () => {
     const name = usernameInput.value.trim();
     if (name.length < 2) return alert(t('nameTooShort'));
     if (name.length > 16) return alert(t('nameTooLong'));
-    
-    // İkisine de kaydet
     localStorage.setItem('fd_username', name);
     document.cookie = `fd_username=${encodeURIComponent(name)};max-age=2592000;path=/`;
-    
-    nameModal.style.display = 'none'; // hidden yerine direkt display none
+    nameModal.style.display = 'none';
     userBadge.style.display = 'flex';
     userBadgeName.textContent = name;
-    socket.emit('setUsername', name);
 };
 
 usernameInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') saveNameBtn.click();
 });
+
+// localStorage Skor Yönetimi
+function getStats() {
+    try { return JSON.parse(localStorage.getItem('fd_stats')) || { wins: 0, losses: 0 }; }
+    catch(e) { return { wins: 0, losses: 0 }; }
+}
+
+function updateMyStats(result) {
+    const stats = getStats();
+    if (result === 'win') stats.wins++;
+    if (result === 'loss') stats.losses++;
+    localStorage.setItem('fd_stats', JSON.stringify(stats));
+    const name = localStorage.getItem('fd_username') || 'Unknown';
+    socket.emit('shareStats', { name, wins: stats.wins, losses: stats.losses });
+}
 
 // Market ve Envanter
 const SKINS = {
@@ -90,11 +99,8 @@ const translations = {
     opponentLeft: 'Opponent left!',
     mapSelect: 'SELECT MAP', mapClassic: '🔥 Classic', mapForest: '🌲 Forest', mapIce: '❄️ Ice',
     enterName: 'ENTER NAME', save: 'Save', leaderboardTitle: 'LEADERBOARD',
-    nameTooShort: 'At least 2 characters!',
-nameTooLong: 'Max 16 characters!',
-lbName: 'Name',
-resetConfirm: 'Reset all your data?',
-nameTaken: 'This name is already taken!',
+    nameTooShort: 'At least 2 characters!', nameTooLong: 'Max 16 characters!',
+    lbName: 'Name', resetConfirm: 'Reset all your data?', noPlayers: 'No players yet',
   },
   tr: {
     createRoom: '✦ Oda Oluştur', joinRoom: 'Katıl', or: 'veya',
@@ -112,11 +118,8 @@ nameTaken: 'This name is already taken!',
     coinEarned: 'Kazandın', coinLost: 'Kaybettin', coins: 'coin',
     mapSelect: 'HARİTA SEÇ', mapClassic: '🔥 Klasik', mapForest: '🌲 Orman', mapIce: '❄️ Buz',
     enterName: 'İSİM GİR', save: 'Kaydet', leaderboardTitle: 'SKOR TABLOSU',
-    nameTooShort: 'En az 2 karakter!',
-nameTooLong: 'En fazla 16 karakter!',
-lbName: 'İsim',
-resetConfirm: 'Tüm verilerini sıfırlamak istiyor musun?',
-nameTaken: 'Bu isim zaten alınmış!',
+    nameTooShort: 'En az 2 karakter!', nameTooLong: 'En fazla 16 karakter!',
+    lbName: 'İsim', resetConfirm: 'Tüm verilerini sıfırlamak istiyor musun?', noPlayers: 'Henüz oyuncu yok',
   },
   de: {
     createRoom: '✦ Raum erstellen', joinRoom: 'Beitreten', or: 'oder',
@@ -134,11 +137,8 @@ nameTaken: 'Bu isim zaten alınmış!',
     coinEarned: 'Du hast', coinLost: 'Du hast', coins: 'Münzen',
     mapSelect: 'KARTE WÄHLEN', mapClassic: '🔥 Klassik', mapForest: '🌲 Wald', mapIce: '❄️ Eis',
     enterName: 'NAME EINGEBEN', save: 'Speichern', leaderboardTitle: 'BESTENLISTE',
-    nameTooShort: 'Mindestens 2 Zeichen!',
-nameTooLong: 'Maximal 16 Zeichen!',
-lbName: 'Name',
-resetConfirm: 'Alle Daten zurücksetzen?',
-nameTaken: 'Dieser Name ist bereits vergeben!',
+    nameTooShort: 'Mindestens 2 Zeichen!', nameTooLong: 'Maximal 16 Zeichen!',
+    lbName: 'Name', resetConfirm: 'Alle Daten zurücksetzen?', noPlayers: 'Noch keine Spieler',
   }
 };
 
@@ -244,7 +244,6 @@ function drawBG() {
     else { const g = ctx.createLinearGradient(0, 0, 0, canvas.height); g.addColorStop(0, '#0a0303'); g.addColorStop(0.5, '#120505'); g.addColorStop(1, '#0d0202'); ctx.fillStyle = g; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = 'rgba(180,0,0,0.2)'; ctx.fillRect(0, canvas.height - 3, canvas.width, 3); }
     drawStars();
 }
-
 function drawPipes() {
     pipes.forEach(p => {
         let pipeColor1, pipeColor2, pipeRim, strokeColor;
@@ -326,11 +325,6 @@ socket.on('roomJoined', d => { myRole = d.role || 'guest'; roomCode = d.roomCode
 socket.on('opponentJoined', () => { statusText.textContent = t('opponentReady'); startBtn.classList.remove('hidden'); if (isHost) { waiting.classList.add('host-glow'); } });
 socket.on('countdown', d => { if (isHost && waiting.classList.contains('host-glow')) { waiting.classList.remove('host-glow'); } selectedMap = d.map || 'classic'; startCountdown(d.seconds, d.pipeSet); });
 socket.on('opponentFlapped', () => { if (oppBird) { oppBird.vel = FLAP_FORCE; oppFlaps++; flapAnim(oppAnim); } });
-socket.on('usernameTaken', (name) => {
-    alert(t('nameTaken'));
-    usernameInput.value = '';
-    usernameInput.focus();
-});
 socket.on('scoreUpdated', d => { if (d.playerId !== socket.id) { oppScore = d.score; oppPipes = d.score; oppScoreEl.textContent = oppScore; triggerBump(oppScoreEl); } });
 
 // Hakkında Modal
@@ -345,11 +339,10 @@ socket.on('gameEnded', d => {
     gameRunning = false; dying = false; cancelAnimationFrame(raf); particles = []; flashAlpha = 0;
     showStats(d); showOnly('gameOver');
     let coinChange = 0;
-    if (d.winner === socket.id) { resultIcon.textContent = '🏆'; resultText.textContent = t('victory'); resultText.style.color = '#3ddc84'; gameOverScreen.style.background = '#0a1a0a'; gameOverScreen.style.borderColor = 'rgba(0,180,0,0.5)'; gameOverScreen.style.boxShadow = '0 0 40px rgba(0,180,0,0.3), 0 8px 40px rgba(0,0,0,0.7)'; addCoins(2); coinChange = 2; }
-    else if (d.winner === 'draw') { resultIcon.textContent = '🤝'; resultText.textContent = t('draw'); resultText.style.color = '#ffaa00'; gameOverScreen.style.background = '#1a0f00'; gameOverScreen.style.borderColor = 'rgba(255,136,0,0.5)'; gameOverScreen.style.boxShadow = '0 0 40px rgba(255,136,0,0.3), 0 8px 40px rgba(0,0,0,0.7)'; addCoins(1); coinChange = 1; }
-    else { resultIcon.textContent = '💀'; resultText.textContent = t('defeat'); resultText.style.color = '#ff4444'; gameOverScreen.style.background = '#1a0a0a'; gameOverScreen.style.borderColor = 'rgba(200,20,20,0.5)'; gameOverScreen.style.boxShadow = '0 0 40px rgba(200,20,20,0.3), 0 8px 40px rgba(0,0,0,0.7)'; spendCoins(1); coinChange = -1; }
+    if (d.winner === socket.id) { resultIcon.textContent = '🏆'; resultText.textContent = t('victory'); resultText.style.color = '#3ddc84'; gameOverScreen.style.background = '#0a1a0a'; gameOverScreen.style.borderColor = 'rgba(0,180,0,0.5)'; gameOverScreen.style.boxShadow = '0 0 40px rgba(0,180,0,0.3), 0 8px 40px rgba(0,0,0,0.7)'; addCoins(2); coinChange = 2; updateMyStats('win'); }
+    else if (d.winner === 'draw') { resultIcon.textContent = '🤝'; resultText.textContent = t('draw'); resultText.style.color = '#ffaa00'; gameOverScreen.style.background = '#1a0f00'; gameOverScreen.style.borderColor = 'rgba(255,136,0,0.5)'; gameOverScreen.style.boxShadow = '0 0 40px rgba(255,136,0,0.3), 0 8px 40px rgba(0,0,0,0.7)'; addCoins(1); coinChange = 1; updateMyStats('draw'); }
+    else { resultIcon.textContent = '💀'; resultText.textContent = t('defeat'); resultText.style.color = '#ff4444'; gameOverScreen.style.background = '#1a0a0a'; gameOverScreen.style.borderColor = 'rgba(200,20,20,0.5)'; gameOverScreen.style.boxShadow = '0 0 40px rgba(200,20,20,0.3), 0 8px 40px rgba(0,0,0,0.7)'; spendCoins(1); coinChange = -1; updateMyStats('loss'); }
     showCoinChange(coinChange);
-    socket.emit('updateStats', { result: d.winner === socket.id ? 'win' : (d.winner === 'draw' ? 'draw' : 'loss'), coins: getCoins() });
 });
 socket.on('opponentReadyForRestart', () => { if (!gameOverScreen.classList.contains('hidden')) { resultText.textContent = t('opponentWantsRestart'); resultText.style.color = '#ff8844'; resultIcon.textContent = '🔄'; } statusText.textContent = t('opponentReadyRestart'); });
 socket.on('menuRedirect', () => { roomCode = null; isHost = false; document.getElementById('joinInput').value = ''; showOnly('menu'); });
@@ -367,16 +360,14 @@ document.getElementById('joinBtn').onclick = () => { const c = document.getEleme
 startBtn.onclick = () => { if (roomCode) socket.emit('startGame', roomCode); };
 document.getElementById('restartBtn').onclick = () => { if (!roomCode) return; socket.emit('readyToRestart', roomCode); resultText.textContent = t('restartWait'); resultText.style.color = '#ff8844'; resultIcon.textContent = '⏳'; };
 document.getElementById('menuBtn').onclick = () => { if (roomCode) socket.emit('backToMenu', roomCode); else showOnly('menu'); };
+
 // Reset butonu
 const resetUserBtn = document.getElementById('resetUserBtn');
 resetUserBtn.onclick = () => {
     if (confirm(t('resetConfirm'))) {
-        // İsim ve cookie'yi temizle
         localStorage.removeItem('fd_username');
+        localStorage.removeItem('fd_stats');
         document.cookie = 'fd_username=; max-age=0; path=/';
-        // Leaderboard'dan sil
-        socket.emit('resetMyStats');
-        // Rozeti gizle, modal'ı göster
         userBadge.style.display = 'none';
         nameModal.style.display = 'flex';
         usernameInput.value = '';
@@ -384,39 +375,77 @@ resetUserBtn.onclick = () => {
     }
 };
 
-// Scoreboard
+// Scoreboard (localStorage tabanlı)
 const leaderboardModal = document.getElementById('leaderboardModal');
 const leaderboardBtn = document.getElementById('leaderboardBtn');
 const leaderboardClose = document.getElementById('leaderboardClose');
 const leaderboardList = document.getElementById('leaderboardList');
-function openLeaderboard() { leaderboardModal.classList.remove('hidden', 'closing'); leaderboardModal.classList.add('opening'); setTimeout(() => { leaderboardModal.classList.remove('opening'); }, 350); }
-function closeLeaderboard() { leaderboardModal.classList.add('closing'); setTimeout(() => { leaderboardModal.classList.add('hidden'); leaderboardModal.classList.remove('closing'); }, 320); }
-leaderboardBtn.onclick = openLeaderboard; leaderboardClose.onclick = closeLeaderboard;
+const remoteStats = {};
+
+function openLeaderboard() {
+    leaderboardModal.classList.remove('hidden', 'closing');
+    leaderboardModal.classList.add('opening');
+    setTimeout(() => { leaderboardModal.classList.remove('opening'); }, 350);
+    socket.emit('requestAllStats');
+    renderLocalLeaderboard();
+}
+function closeLeaderboard() {
+    leaderboardModal.classList.add('closing');
+    setTimeout(() => { leaderboardModal.classList.add('hidden'); leaderboardModal.classList.remove('closing'); }, 320);
+}
+leaderboardBtn.onclick = openLeaderboard;
+leaderboardClose.onclick = closeLeaderboard;
 leaderboardModal.onclick = (e) => { if (e.target === leaderboardModal) closeLeaderboard(); };
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !leaderboardModal.classList.contains('hidden')) closeLeaderboard(); });
 
-socket.on('leaderboardUpdate', (data) => { renderLeaderboard(data); });
-function renderLeaderboard(data) {
+socket.on('playerStats', (data) => {
+    remoteStats[data.name] = { wins: data.wins, losses: data.losses };
+    renderLocalLeaderboard();
+});
+
+socket.on('requestStatsReply', () => {
+    const myStats = getStats();
+    const myName = localStorage.getItem('fd_username') || 'Unknown';
+    socket.emit('shareStats', { name: myName, wins: myStats.wins, losses: myStats.losses });
+});
+
+function renderLocalLeaderboard() {
     if (!leaderboardList) return;
     leaderboardList.innerHTML = '';
-    if (!data || data.length === 0) {
-        leaderboardList.innerHTML = '<div style="text-align:center; color:var(--muted); padding:20px;">No players yet</div>';
+    
+    const myName = localStorage.getItem('fd_username') || 'Unknown';
+    const myStats = getStats();
+    const allPlayers = [{ name: myName, wins: myStats.wins, losses: myStats.losses }];
+    
+    for (const [name, stats] of Object.entries(remoteStats)) {
+        if (name !== myName) {
+            allPlayers.push({ name, wins: stats.wins, losses: stats.losses });
+        }
+    }
+    
+    allPlayers.sort((a, b) => b.wins - a.wins);
+    
+    if (allPlayers.length === 0) {
+        leaderboardList.innerHTML = `<div style="text-align:center; color:var(--muted); padding:20px;">${t('noPlayers')}</div>`;
         return;
     }
+    
     const header = document.createElement('div');
     header.style.cssText = 'display:flex; padding:10px 16px; font-weight:700; font-size:0.75rem; letter-spacing:1px; color:var(--muted); border-bottom:1px solid var(--border);';
     header.innerHTML = `<span style="width:40px;">#</span><span style="flex:1;">${t('lbName')}</span><span style="width:60px;text-align:center;">🏆</span><span style="width:60px;text-align:center;">💀</span>`;
     leaderboardList.appendChild(header);
-    data.forEach((player, index) => {
+    
+    allPlayers.forEach((player, index) => {
         const row = document.createElement('div');
         row.style.cssText = 'display:flex; padding:10px 16px; align-items:center; border-bottom:1px solid rgba(255,255,255,0.03); font-size:0.9rem;';
-        if (player.id === socket.id) row.style.background = 'rgba(255,100,0,0.1)';
+        if (player.name === myName) row.style.background = 'rgba(255,100,0,0.1)';
         const rank = index + 1;
         const rankIcon = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
         row.innerHTML = `<span style="width:40px; font-weight:700;">${rankIcon}</span><span style="flex:1; font-weight:600;">${escapeHTML(player.name)}</span><span style="width:60px; text-align:center; color:#3ddc84;">${player.wins}</span><span style="width:60px; text-align:center; color:#ff4444;">${player.losses}</span>`;
         leaderboardList.appendChild(row);
     });
 }
+
 function escapeHTML(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
 // Ping
@@ -457,8 +486,7 @@ function updateUILanguage() {
     const aboutEng = document.getElementById('aboutEngine'); if (aboutEng) aboutEng.textContent = t('engine');
     const madeWith = document.getElementById('aboutMadeWith'); if (madeWith) madeWith.textContent = t('madeWith');
     const by = document.getElementById('aboutBy'); if (by) by.textContent = t('by');
-    const usernameInput = document.getElementById('usernameInput');
-if (usernameInput) usernameInput.placeholder = t('enterName');
+    const usernameInput = document.getElementById('usernameInput'); if (usernameInput) usernameInput.placeholder = t('enterName');
     const mapTitle = document.getElementById('mapSelectTitle'); if (mapTitle) mapTitle.textContent = t('mapSelect');
     const mapSpans = document.querySelectorAll('.map-option span'); if (mapSpans.length >= 3) { mapSpans[0].textContent = t('mapClassic'); mapSpans[1].textContent = t('mapForest'); mapSpans[2].textContent = t('mapIce'); }
     const nameModalTitle = document.getElementById('nameModalTitle'); if (nameModalTitle) nameModalTitle.textContent = t('enterName');
@@ -467,8 +495,7 @@ if (usernameInput) usernameInput.placeholder = t('enterName');
     document.querySelector('.hud-box.you .hud-label').textContent = t('you'); document.querySelector('.hud-box.opp .hud-label').textContent = t('opponent');
     document.getElementById('restartBtn').textContent = t('restart'); document.getElementById('menuBtn').textContent = t('menu');
     const statBoxes = document.querySelectorAll('.stat-box'); if (statBoxes.length >= 3) { statBoxes[0].querySelector('.stat-label').textContent = '🏁 ' + t('pipes'); statBoxes[1].querySelector('.stat-label').textContent = '🪶 ' + t('flaps'); statBoxes[2].querySelector('.stat-label').textContent = '⏱️ ' + t('time'); }
-    const aboutModalTitle = document.querySelector('#aboutModal .modal-title');
-if (aboutModalTitle) aboutModalTitle.textContent = t('aboutTitle');
+    const aboutModalTitle = document.querySelector('#aboutModal .modal-title'); if (aboutModalTitle) aboutModalTitle.textContent = t('aboutTitle');
     const modalDesc = document.querySelector('.modal-desc'); if (modalDesc) modalDesc.innerHTML = t('aboutDesc').replace(/\n/g, '<br>');
     const rt = resultText.textContent;
     if (rt.includes('ZAFER') || rt.includes('VICTORY') || rt.includes('SIEG')) resultText.textContent = t('victory');
