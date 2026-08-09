@@ -11,19 +11,11 @@ app.use(express.static(__dirname));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 const rooms = {};
-const leaderboard = {};
 
 function generatePipeSet(n = 20) {
     return Array.from({ length: n }, () => ({
         top: Math.floor(Math.random() * 210) + 85
     }));
-}
-
-function getLeaderboard() {
-    return Object.entries(leaderboard)
-        .map(([id, data]) => ({ id, ...data }))
-        .sort((a, b) => b.wins - a.wins)
-        .slice(0, 50);
 }
 
 io.on('connection', socket => {
@@ -34,42 +26,18 @@ io.on('connection', socket => {
         socket.emit('pong');
     });
 
-    socket.on('setUsername', (username) => {
-    // Bu isimde eski bir kayıt var mı? (kendine ait olabilir)
-    let existingData = null;
-    let existingId = null;
-    
-    for (const [id, data] of Object.entries(leaderboard)) {
-        if (data.name === username && id !== socket.id) {
-            existingData = data;
-            existingId = id;
-            break;
-        }
-    }
-    
-    if (existingData) {
-        // Eski veriyi yeni ID'ye taşı
-        leaderboard[socket.id] = existingData;
-        leaderboard[socket.id].name = username;
-        delete leaderboard[existingId];
-    } else if (!leaderboard[socket.id]) {
-        // Tamamen yeni kullanıcı
-        leaderboard[socket.id] = { name: username, wins: 0, losses: 0, coins: 0 };
-    } else {
-        // Mevcut ID var, sadece isim güncelle
-        leaderboard[socket.id].name = username;
-    }
-    
-    io.emit('leaderboardUpdate', getLeaderboard());
-});
+    // Oyuncu kendi skorunu paylaştı
+    socket.on('shareStats', (data) => {
+        socket.broadcast.emit('playerStats', { 
+            name: data.name, 
+            wins: data.wins, 
+            losses: data.losses 
+        });
+    });
 
-    // İstatistik güncelle
-    socket.on('updateStats', (data) => {
-        if (!leaderboard[socket.id]) return;
-        if (data.result === 'win') leaderboard[socket.id].wins++;
-        if (data.result === 'loss') leaderboard[socket.id].losses++;
-        leaderboard[socket.id].coins = data.coins;
-        io.emit('leaderboardUpdate', getLeaderboard());
+    // Leaderboard açıldı, herkesten veri iste
+    socket.on('requestAllStats', () => {
+        socket.broadcast.emit('requestStatsReply');
     });
 
     // Oda Oluştur
@@ -218,12 +186,6 @@ io.on('connection', socket => {
             }
         }
         socket.emit('menuRedirect');
-    });
-
-    // Kendini leaderboard'dan sil
-    socket.on('resetMyStats', () => {
-        delete leaderboard[socket.id];
-        io.emit('leaderboardUpdate', getLeaderboard());
     });
 
     // Disconnect
