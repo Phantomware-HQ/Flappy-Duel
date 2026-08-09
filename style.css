@@ -92,6 +92,15 @@ body {
     to   { opacity:1; transform:translateY(0)     scale(1);   }
 }
 
+/* Kullanıcı Rozeti */
+#userBadge {
+    position: fixed; top: 15px; left: 20px; z-index: 100;
+    background: rgba(15, 5, 5, 0.7); backdrop-filter: blur(5px);
+    border: 1px solid #a00; border-radius: 30px;
+    padding: 6px 16px; font-size: 0.9rem; color: #fff;
+    display: none; align-items: center; gap: 8px;
+}
+
 .card {
     width: 100%; background: var(--surface);
     border: 1px solid var(--border); border-radius: var(--radius);
