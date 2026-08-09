@@ -32,26 +32,11 @@ saveNameBtn.onclick = () => {
     const name = usernameInput.value.trim();
     if (name.length < 2) return alert(t('nameTooShort'));
     if (name.length > 16) return alert(t('nameTooLong'));
-    
-    // İsim kontrolü için server'a sor
-    socket.emit('checkUsername', name, (response) => {
-        if (!response.available) {
-            alert(`❌ "${name}" kullanılıyor! Başka bir isim seç.`);
-            usernameInput.value = '';
-            usernameInput.focus();
-            return;
-        }
-        
-        // İsim müsait, kaydet
-        localStorage.setItem('fd_username', name);
-        document.cookie = `fd_username=${encodeURIComponent(name)};max-age=2592000;path=/`;
-        nameModal.style.display = 'none';
-        userBadge.style.display = 'flex';
-        userBadgeName.textContent = name;
-        
-        // İsmini sunucuya bildir
-        socket.emit('registerUsername', name);
-    });
+    localStorage.setItem('fd_username', name);
+    document.cookie = `fd_username=${encodeURIComponent(name)};max-age=2592000;path=/`;
+    nameModal.style.display = 'none';
+    userBadge.style.display = 'flex';
+    userBadgeName.textContent = name;
 };
 
 usernameInput.addEventListener('keydown', (e) => {
@@ -430,41 +415,17 @@ function renderLocalLeaderboard() {
     
     const myName = localStorage.getItem('fd_username') || 'Unknown';
     const myStats = getStats();
-    const allPlayers = [];
+    const allPlayers = [{ name: myName, wins: myStats.wins, losses: myStats.losses }];
     
-    // Önce remoteStats'taki her oyuncuyu ekle
     for (const [name, stats] of Object.entries(remoteStats)) {
-        allPlayers.push({ name, wins: stats.wins, losses: stats.losses });
-    }
-    
-    // Kendi istatistiklerini ekle (eğer remoteStats'ta yoksa)
-    const existing = allPlayers.find(p => p.name === myName);
-    if (!existing && myName !== 'Unknown') {
-        allPlayers.push({ name: myName, wins: myStats.wins, losses: myStats.losses });
-    }
-    
-    // Aynı isimleri birleştir (güvenlik için)
-    const uniquePlayers = new Map();
-    allPlayers.forEach(p => {
-        if (uniquePlayers.has(p.name)) {
-            const existing = uniquePlayers.get(p.name);
-            existing.wins += p.wins;
-            existing.losses += p.losses;
-        } else {
-            uniquePlayers.set(p.name, { wins: p.wins, losses: p.losses });
+        if (name !== myName) {
+            allPlayers.push({ name, wins: stats.wins, losses: stats.losses });
         }
-    });
+    }
     
-    // Map'ten array'e çevir
-    const finalPlayers = Array.from(uniquePlayers.entries()).map(([name, stats]) => ({
-        name,
-        wins: stats.wins,
-        losses: stats.losses
-    }));
+    allPlayers.sort((a, b) => b.wins - a.wins);
     
-    finalPlayers.sort((a, b) => b.wins - a.wins);
-    
-    if (finalPlayers.length === 0) {
+    if (allPlayers.length === 0) {
         leaderboardList.innerHTML = `<div style="text-align:center; color:var(--muted); padding:20px;">${t('noPlayers')}</div>`;
         return;
     }
@@ -474,7 +435,7 @@ function renderLocalLeaderboard() {
     header.innerHTML = `<span style="width:40px;">#</span><span style="flex:1;">${t('lbName')}</span><span style="width:60px;text-align:center;">🏆</span><span style="width:60px;text-align:center;">💀</span>`;
     leaderboardList.appendChild(header);
     
-    finalPlayers.forEach((player, index) => {
+    allPlayers.forEach((player, index) => {
         const row = document.createElement('div');
         row.style.cssText = 'display:flex; padding:10px 16px; align-items:center; border-bottom:1px solid rgba(255,255,255,0.03); font-size:0.9rem;';
         if (player.name === myName) row.style.background = 'rgba(255,100,0,0.1)';
