@@ -3,8 +3,17 @@ const socket = io();
 let selectedMap = 'classic';
 let myRole = null;
 
-// Kullanıcı adı kontrolü
-const username = localStorage.getItem('fd_username');
+// Kullanıcı adı kontrolü - önce localStorage, yoksa cookie
+let username = localStorage.getItem('fd_username');
+if (!username) {
+    // Cookie'den oku
+    const cookieMatch = document.cookie.match(/fd_username=([^;]+)/);
+    if (cookieMatch) {
+        username = decodeURIComponent(cookieMatch[1]);
+        localStorage.setItem('fd_username', username); // localStorage'a da geri yaz
+    }
+}
+
 const userBadge = document.getElementById('userBadge');
 const userBadgeName = document.getElementById('userBadgeName');
 const nameModal = document.getElementById('nameModal');
@@ -12,9 +21,10 @@ const usernameInput = document.getElementById('usernameInput');
 const saveNameBtn = document.getElementById('saveNameBtn');
 
 if (!username) {
-    nameModal.classList.remove('hidden');
+    nameModal.style.display = 'flex'; // modal'ı göster
     usernameInput.focus();
 } else {
+    nameModal.style.display = 'none'; // modal'ı gizle
     userBadge.style.display = 'flex';
     userBadgeName.textContent = username;
     socket.emit('setUsername', username);
@@ -23,9 +33,13 @@ if (!username) {
 saveNameBtn.onclick = () => {
     const name = usernameInput.value.trim();
     if (name.length < 2) return alert(t('nameTooShort'));
-if (name.length > 16) return alert(t('nameTooLong'));
+    if (name.length > 16) return alert(t('nameTooLong'));
+    
+    // İkisine de kaydet
     localStorage.setItem('fd_username', name);
-    nameModal.classList.add('hidden');
+    document.cookie = `fd_username=${encodeURIComponent(name)};max-age=2592000;path=/`;
+    
+    nameModal.style.display = 'none'; // hidden yerine direkt display none
     userBadge.style.display = 'flex';
     userBadgeName.textContent = name;
     socket.emit('setUsername', name);
@@ -78,6 +92,9 @@ const translations = {
     enterName: 'ENTER NAME', save: 'Save', leaderboardTitle: 'LEADERBOARD',
     nameTooShort: 'At least 2 characters!',
 nameTooLong: 'Max 16 characters!',
+lbName: 'Name',
+resetConfirm: 'Reset all your data?',
+nameTaken: 'This name is already taken!',
   },
   tr: {
     createRoom: '✦ Oda Oluştur', joinRoom: 'Katıl', or: 'veya',
@@ -97,6 +114,9 @@ nameTooLong: 'Max 16 characters!',
     enterName: 'İSİM GİR', save: 'Kaydet', leaderboardTitle: 'SKOR TABLOSU',
     nameTooShort: 'En az 2 karakter!',
 nameTooLong: 'En fazla 16 karakter!',
+lbName: 'İsim',
+resetConfirm: 'Tüm verilerini sıfırlamak istiyor musun?',
+nameTaken: 'Bu isim zaten alınmış!',
   },
   de: {
     createRoom: '✦ Raum erstellen', joinRoom: 'Beitreten', or: 'oder',
@@ -116,6 +136,9 @@ nameTooLong: 'En fazla 16 karakter!',
     enterName: 'NAME EINGEBEN', save: 'Speichern', leaderboardTitle: 'BESTENLISTE',
     nameTooShort: 'Mindestens 2 Zeichen!',
 nameTooLong: 'Maximal 16 Zeichen!',
+lbName: 'Name',
+resetConfirm: 'Alle Daten zurücksetzen?',
+nameTaken: 'Dieser Name ist bereits vergeben!',
   }
 };
 
@@ -303,6 +326,11 @@ socket.on('roomJoined', d => { myRole = d.role || 'guest'; roomCode = d.roomCode
 socket.on('opponentJoined', () => { statusText.textContent = t('opponentReady'); startBtn.classList.remove('hidden'); if (isHost) { waiting.classList.add('host-glow'); } });
 socket.on('countdown', d => { if (isHost && waiting.classList.contains('host-glow')) { waiting.classList.remove('host-glow'); } selectedMap = d.map || 'classic'; startCountdown(d.seconds, d.pipeSet); });
 socket.on('opponentFlapped', () => { if (oppBird) { oppBird.vel = FLAP_FORCE; oppFlaps++; flapAnim(oppAnim); } });
+socket.on('usernameTaken', (name) => {
+    alert(t('nameTaken'));
+    usernameInput.value = '';
+    usernameInput.focus();
+});
 socket.on('scoreUpdated', d => { if (d.playerId !== socket.id) { oppScore = d.score; oppPipes = d.score; oppScoreEl.textContent = oppScore; triggerBump(oppScoreEl); } });
 
 // Hakkında Modal
@@ -339,6 +367,22 @@ document.getElementById('joinBtn').onclick = () => { const c = document.getEleme
 startBtn.onclick = () => { if (roomCode) socket.emit('startGame', roomCode); };
 document.getElementById('restartBtn').onclick = () => { if (!roomCode) return; socket.emit('readyToRestart', roomCode); resultText.textContent = t('restartWait'); resultText.style.color = '#ff8844'; resultIcon.textContent = '⏳'; };
 document.getElementById('menuBtn').onclick = () => { if (roomCode) socket.emit('backToMenu', roomCode); else showOnly('menu'); };
+// Reset butonu
+const resetUserBtn = document.getElementById('resetUserBtn');
+resetUserBtn.onclick = () => {
+    if (confirm(t('resetConfirm'))) {
+        // İsim ve cookie'yi temizle
+        localStorage.removeItem('fd_username');
+        document.cookie = 'fd_username=; max-age=0; path=/';
+        // Leaderboard'dan sil
+        socket.emit('resetMyStats');
+        // Rozeti gizle, modal'ı göster
+        userBadge.style.display = 'none';
+        nameModal.style.display = 'flex';
+        usernameInput.value = '';
+        usernameInput.focus();
+    }
+};
 
 // Scoreboard
 const leaderboardModal = document.getElementById('leaderboardModal');
@@ -352,7 +396,27 @@ leaderboardModal.onclick = (e) => { if (e.target === leaderboardModal) closeLead
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !leaderboardModal.classList.contains('hidden')) closeLeaderboard(); });
 
 socket.on('leaderboardUpdate', (data) => { renderLeaderboard(data); });
-function renderLeaderboard(data) { if (!leaderboardList) return; leaderboardList.innerHTML = ''; if (!data || data.length === 0) { leaderboardList.innerHTML = '<div style="text-align:center; color:var(--muted); padding:20px;">No players yet</div>'; return; } const header = document.createElement('div'); header.style.cssText = 'display:flex; padding:10px 16px; font-weight:700; font-size:0.75rem; letter-spacing:1px; color:var(--muted); border-bottom:1px solid var(--border);'; header.innerHTML = '<span style="width:40px;">#</span><span style="flex:1;">Name</span><span style="width:50px;text-align:center;">🏆</span><span style="width:50px;text-align:center;">💀</span><span style="width:60px;text-align:center;">🪙</span>'; leaderboardList.appendChild(header); data.forEach((player, index) => { const row = document.createElement('div'); row.style.cssText = 'display:flex; padding:10px 16px; align-items:center; border-bottom:1px solid rgba(255,255,255,0.03); font-size:0.9rem;'; if (player.id === socket.id) row.style.background = 'rgba(255,100,0,0.1)'; const rank = index + 1; const rankIcon = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`; row.innerHTML = `<span style="width:40px; font-weight:700;">${rankIcon}</span><span style="flex:1; font-weight:600;">${escapeHTML(player.name)}</span><span style="width:50px; text-align:center; color:#3ddc84;">${player.wins}</span><span style="width:50px; text-align:center; color:#ff4444;">${player.losses}</span><span style="width:60px; text-align:center; color:#ffcc00;">${player.coins}</span>`; leaderboardList.appendChild(row); }); }
+function renderLeaderboard(data) {
+    if (!leaderboardList) return;
+    leaderboardList.innerHTML = '';
+    if (!data || data.length === 0) {
+        leaderboardList.innerHTML = '<div style="text-align:center; color:var(--muted); padding:20px;">No players yet</div>';
+        return;
+    }
+    const header = document.createElement('div');
+    header.style.cssText = 'display:flex; padding:10px 16px; font-weight:700; font-size:0.75rem; letter-spacing:1px; color:var(--muted); border-bottom:1px solid var(--border);';
+    header.innerHTML = `<span style="width:40px;">#</span><span style="flex:1;">${t('lbName')}</span><span style="width:60px;text-align:center;">🏆</span><span style="width:60px;text-align:center;">💀</span>`;
+    leaderboardList.appendChild(header);
+    data.forEach((player, index) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex; padding:10px 16px; align-items:center; border-bottom:1px solid rgba(255,255,255,0.03); font-size:0.9rem;';
+        if (player.id === socket.id) row.style.background = 'rgba(255,100,0,0.1)';
+        const rank = index + 1;
+        const rankIcon = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+        row.innerHTML = `<span style="width:40px; font-weight:700;">${rankIcon}</span><span style="flex:1; font-weight:600;">${escapeHTML(player.name)}</span><span style="width:60px; text-align:center; color:#3ddc84;">${player.wins}</span><span style="width:60px; text-align:center; color:#ff4444;">${player.losses}</span>`;
+        leaderboardList.appendChild(row);
+    });
+}
 function escapeHTML(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
 // Ping
